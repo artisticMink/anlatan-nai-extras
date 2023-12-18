@@ -1,1 +1,1 @@
-# anlatan-promptmanager
+# NovelAI QOL improvements for SillyTavern

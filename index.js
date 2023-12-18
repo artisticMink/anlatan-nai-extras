@@ -1,19 +1,19 @@
-// The main script for the extension
-// The following are examples of some basic extension functionality
-
 //You'll likely need to import extension_settings, getContext, and loadExtensionSettings from extensions.js
-import { extension_settings, getContext, loadExtensionSettings } from "../../../extensions.js";
-
-//You'll likely need to import some other functions from the main script
-import { saveSettingsDebounced } from "../../../../script.js";
+import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
+import { event_types, eventSource, saveSettingsDebounced } from '../../../../script.js';
 
 // Keep track of where your extension is located, name should match repo name
-const extensionName = "st-extension-example";
+const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
-const defaultSettings = {};
+const defaultSettings = {
+        storyString: '{{wiBefore}} {{description}} {{personality}} {{persona}} {{wiAfter}} {{chatExamples}} {{scenario}} {{preamble}} {{chatHistory}}',
+};
 
-
+function onStoryStringChange(event) {
+    extension_settings[extensionName].storyString = event.target.value;
+    saveSettingsDebounced();
+}
 
 // Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
@@ -22,42 +22,53 @@ async function loadSettings() {
     if (Object.keys(extension_settings[extensionName]).length === 0) {
         Object.assign(extension_settings[extensionName], defaultSettings);
     }
-
-    // Updating settings in the UI
-    $("#example_setting").prop("checked", extension_settings[extensionName].example_setting).trigger("input");
 }
 
-// This function is called when the extension settings are changed in the UI
-function onExampleInput(event) {
-    const value = Boolean($(event.target).prop("checked"));
-    extension_settings[extensionName].example_setting = value;
-    saveSettingsDebounced();
-}
-
-// This function is called when the button is clicked
-function onButtonClick() {
-    // You can do whatever you want here
-    // Let's make a popup appear with the checked setting
-    toastr.info(
-        `The checkbox is ${extension_settings[extensionName].example_setting ? "checked" : "not checked"}`,
-        "A popup appeared because you clicked the button!"
-    );
-}
-
-// This function is called when the extension is loaded
-jQuery(async () => {
-    // This is an example of loading HTML from a file
-    const settingsHtml = await $.get(`${extensionFolderPath}/example.html`);
-
-    // Append settingsHtml to extensions_settings
-    // extension_settings and extensions_settings2 are the left and right columns of the settings menu
-    // Left should be extensions that deal with system functions and right should be visual/UI related
-    $("#extensions_settings").append(settingsHtml);
-
-    // These are examples of listening for events
-    $("#my_button").on("click", onButtonClick);
-    $("#example_setting").on("input", onExampleInput);
-
+(async function() {
     // Load settings when starting things up (if you have any)
-    loadSettings();
-});
+    await loadSettings();
+    const settings = extension_settings[extensionName];
+
+    const container = document.getElementById('novel_api-settings');
+    const naiExtrasHtml = await $.get(`${extensionFolderPath}/example.html`);
+
+    container.insertAdjacentHTML('beforeend', naiExtrasHtml);
+
+    const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
+
+    storyStringTextarea.value = settings.storyString;
+
+    extensionsHandlebars.registerHelper('instruct', function(text) {
+        if (!text) return '';
+        return '{' + text + '}';
+    });
+
+    extensionsHandlebars.registerHelper('trim', function(options) {
+        return options.fn(this).replace(/\s{3,}/g,' ').replace(/\n{3,}/g, '\n').trim();
+    });
+
+
+    const orderInput = (data) => {
+        if ('novel' !== data.api) return;
+
+        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}` , { noEscape: true });
+
+        data.extensionOutput = storyStringTemplate({
+            wiBefore: data.beforeScenarioAnchor,
+            description: data.description,
+            personality : data.personality,
+            persona : data.persona,
+            wiAfter: data.afterScenarioAnchor,
+            examples: data.mesExmString,
+            scenario : data.scenario,
+            preamble: data.naiPreamble,
+            main: data.main,
+            jailbreak: data.jailbreak,
+            chat: data.finalMesSend.map((e) => `${e.extensionPrompts.join('')}${e.message}`).join(''),
+            generatedPromptCache: data.generatedPromptCache,
+        });
+    };
+
+    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
+    storyStringTextarea.addEventListener('change', onStoryStringChange);
+})();
