@@ -7,13 +7,50 @@ const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {
-        storyString: '{{wiBefore}} {{description}} {{personality}} {{persona}} {{wiAfter}} {{chatExamples}} {{scenario}} {{preamble}} {{chatHistory}}',
+    removeLastMentionOfUser: false,
+    removeExampleChatSeparators: false,
+    storyString: `{{wiBefore}}
+    {{description}}
+    {{personality}}
+    {{persona}}
+    {{wiAfter}}
+    {{examples}}
+    {{scenario}}
+    ***
+    {{preamble}}
+    {{instruct main}}
+    {{chat}}`,
 };
 
 function onStoryStringChange(event) {
     extension_settings[extensionName].storyString = event.target.value;
     saveSettingsDebounced();
 }
+
+function onRemoveLastMentionOfUserChange(event) {
+    extension_settings[extensionName].removeLastMentionOfUser = Boolean(event.target.checked);
+    saveSettingsDebounced();
+}
+
+function onRemoveExampleChatSeparatorsChange(event) {
+    extension_settings[extensionName].removeExampleChatSeparators = Boolean(event.target.checked);
+    saveSettingsDebounced();
+}
+
+const removeLastOccurrence = (target, str) => {
+    if (typeof target !== 'string' || typeof str !== 'string') {
+        throw new Error('Both target and str must be of type string');
+    }
+
+    const index = target.lastIndexOf(str);
+
+    if (index !== -1 && index === target.length - str.length) {
+        return target.substring(0, index);
+    }
+
+    return target;
+};
+
 
 // Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
@@ -35,8 +72,12 @@ async function loadSettings() {
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
 
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
+    const removeLastMentionOfUserToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
+    const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
 
     storyStringTextarea.value = settings.storyString;
+    removeLastMentionOfUserToggle.checked = settings.removeLastMentionOfUser;
+    removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
 
     extensionsHandlebars.registerHelper('instruct', function(text) {
         if (!text) return '';
@@ -53,22 +94,34 @@ async function loadSettings() {
 
         const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}` , { noEscape: true });
 
-        data.extensionOutput = storyStringTemplate({
+        let chat = data.finalMesSend
+            .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
+            .join('')
+            .trim();
+
+        if (settings.removeLastMentionOfUser) chat = removeLastOccurrence(chat, `${data.char}:`);
+
+        let examples = data.mesExmString;
+        if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
+
+        data.combinedPrompt = storyStringTemplate({
             wiBefore: data.beforeScenarioAnchor,
             description: data.description,
             personality : data.personality,
             persona : data.persona,
             wiAfter: data.afterScenarioAnchor,
-            examples: data.mesExmString,
+            examples,
             scenario : data.scenario,
             preamble: data.naiPreamble,
             main: data.main,
             jailbreak: data.jailbreak,
-            chat: data.finalMesSend.map((e) => `${e.extensionPrompts.join('')}${e.message}`).join(''),
+            chat,
             generatedPromptCache: data.generatedPromptCache,
-        });
+        }).trim();
     };
 
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
     storyStringTextarea.addEventListener('change', onStoryStringChange);
+    removeLastMentionOfUserToggle.addEventListener('change', onRemoveLastMentionOfUserChange);
+    removeExampleChatSeparators.addEventListener('change', onRemoveExampleChatSeparatorsChange);
 })();

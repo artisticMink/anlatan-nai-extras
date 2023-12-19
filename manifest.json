@@ -6,7 +6,7 @@
   "js": "index.js",
   "css": "",
   "author": "maver",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homePage": "https://github.com/SillyTavern/Extension-Variables",
   "auto_update": false
 }
