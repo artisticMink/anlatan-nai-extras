@@ -1,12 +1,12 @@
 {
-  "display_name":"Promptmanager for NovelAI",
+  "display_name":"Quality of Life improvements for NovelAI",
   "loading_order": 100,
   "requires": [],
   "optional": [],
   "js": "index.js",
   "css": "",
-  "author": "maver",
-  "version": "1.0.1",
-  "homePage": "https://github.com/SillyTavern/Extension-Variables",
+  "author": "artisticMink",
+  "version": "1.0.2",
+  "homePage": "https://github.com/SillyTavern/SillyTavern",
   "auto_update": false
 }

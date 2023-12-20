@@ -1,40 +1,97 @@
 //You'll likely need to import extension_settings, getContext, and loadExtensionSettings from extensions.js
 import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
 import { event_types, eventSource, saveSettingsDebounced } from '../../../../script.js';
+import { uuidv4 } from '../../../utils.js';
 
 // Keep track of where your extension is located, name should match repo name
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {
-    removeLastMentionOfUser: false,
+    removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
+    textBlocks: [],
     storyString: `{{wiBefore}}
-    {{description}}
-    {{personality}}
-    {{persona}}
-    {{wiAfter}}
-    {{examples}}
-    {{scenario}}
-    ***
-    {{preamble}}
-    {{instruct main}}
-    {{chat}}`,
+{{description}}
+{{personality}}
+{{persona}}
+{{wiAfter}}
+{{examples}}
+{{scenario}}
+***
+{{preamble}}
+{{instruct main}}
+{{chat}}`,
 };
 
 function onStoryStringChange(event) {
-    extension_settings[extensionName].storyString = event.target.value;
+    extensionSettings.storyString = event.target.value;
     saveSettingsDebounced();
 }
 
-function onRemoveLastMentionOfUserChange(event) {
-    extension_settings[extensionName].removeLastMentionOfUser = Boolean(event.target.checked);
+function onRemoveLastMentionOfCharChange(event) {
+    extensionSettings.removeLastMentionOfChar = Boolean(event.target.checked);
     saveSettingsDebounced();
 }
 
 function onRemoveExampleChatSeparatorsChange(event) {
-    extension_settings[extensionName].removeExampleChatSeparators = Boolean(event.target.checked);
+    extensionSettings.removeExampleChatSeparators = Boolean(event.target.checked);
     saveSettingsDebounced();
+}
+
+function onResetStoryStringClick(event) {
+    document.getElementById('anlatan-nai-extras-storystring-template').value = defaultSettings.storyString;
+    extensionSettings.storyString = defaultSettings.storyString;
+    saveSettingsDebounced();
+}
+
+function onAddBlockClick(event) {
+    const labelInput = document.getElementById('anlatan-nai-extras-newblock-label');
+    const contentInput = document.getElementById('anlatan-nai-extras-newblock-content');
+
+    const label = labelInput.value;
+    const content = contentInput.value;
+
+    if (!label || !content) return;
+
+    extensionSettings.textBlocks.push({
+        uuid: uuidv4(),
+        label,
+        content,
+    });
+
+    labelInput.value = '';
+    contentInput.value = '';
+
+    saveSettingsDebounced();
+    updateTextBlocks();
+}
+
+function onRemoveBlockClick(event) {
+    extensionSettings.textBlocks = extensionSettings.textBlocks.filter(block => event.target.parentElement.dataset.uuid !== block.uuid);
+    saveSettingsDebounced();
+    updateTextBlocks();
+}
+
+function updateTextBlocks() {
+    const container = document.getElementById('anlatan-nai-extras-textblocks');
+    container.innerHTML = '';
+    let html = '';
+
+    extensionSettings.textBlocks.forEach((block) => {
+        html += `<div class="flex wide100p">
+                    <input type="text" value="${block.label}" class="text_pole textarea_compact" placeholder="Block name" disabled/>
+                    <div class="anlatan-nai-extras-removeBlock menu_button menu_button_icon" style="margin-left:1em;" data-uuid="${block.uuid}">
+                        <i class="fa-xs fa-solid fa-minus"></i>
+                        <small data-i18n="Remove" >Remove</small>
+                    </div>
+                </div>
+                <textarea class="text_pole textarea_compact" placeholder="Block content" disabled>${block.content}</textarea>`;
+    });
+
+    container.insertAdjacentHTML('beforeend', html);
+
+    Array.from(document.getElementsByClassName('anlatan-nai-extras-removeBlock')).forEach((element) => element.addEventListener('click', onRemoveBlockClick));
 }
 
 const removeLastOccurrence = (target, str) => {
@@ -51,77 +108,90 @@ const removeLastOccurrence = (target, str) => {
     return target;
 };
 
-
-// Loads the extension settings if they exist, otherwise initializes them to the defaults.
 async function loadSettings() {
-    //Create the settings if they don't exist
     extension_settings[extensionName] = extension_settings[extensionName] || {};
     if (Object.keys(extension_settings[extensionName]).length === 0) {
         Object.assign(extension_settings[extensionName], defaultSettings);
     }
 }
 
-(async function() {
-    // Load settings when starting things up (if you have any)
+(async function () {
     await loadSettings();
-    const settings = extension_settings[extensionName];
+    const settings = extensionSettings;
 
     const container = document.getElementById('novel_api-settings');
-    const naiExtrasHtml = await $.get(`${extensionFolderPath}/example.html`);
+    const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
 
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
 
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
     const removeLastMentionOfUserToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
     const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
+    const resetStoryString = document.getElementById('anlatan-nai-extras-resetStoryString');
+    const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
 
     storyStringTextarea.value = settings.storyString;
-    removeLastMentionOfUserToggle.checked = settings.removeLastMentionOfUser;
+    removeLastMentionOfUserToggle.checked = settings.removeLastMentionOfChar;
     removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
 
-    extensionsHandlebars.registerHelper('instruct', function(text) {
+    extensionsHandlebars.registerHelper('instruct', function (text) {
         if (!text) return '';
         return '{' + text + '}';
     });
 
-    extensionsHandlebars.registerHelper('trim', function(options) {
-        return options.fn(this).replace(/\s{3,}/g,' ').replace(/\n{3,}/g, '\n').trim();
+    extensionsHandlebars.registerHelper('trim', function (options) {
+        return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
     });
-
 
     const orderInput = (data) => {
         if ('novel' !== data.api) return;
 
-        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}` , { noEscape: true });
+        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
 
         let chat = data.finalMesSend
             .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
             .join('')
             .trim();
 
-        if (settings.removeLastMentionOfUser) chat = removeLastOccurrence(chat, `${data.char}:`);
+        if (settings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
 
         let examples = data.mesExmString;
         if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
 
-        data.combinedPrompt = storyStringTemplate({
+        const markers = {
             wiBefore: data.beforeScenarioAnchor,
             description: data.description,
-            personality : data.personality,
-            persona : data.persona,
+            personality: data.personality,
+            persona: data.persona,
             wiAfter: data.afterScenarioAnchor,
             examples,
-            scenario : data.scenario,
+            scenario: data.scenario,
             preamble: data.naiPreamble,
             main: data.main,
             jailbreak: data.jailbreak,
             chat,
+            user: data.name1,
+            char: data.name2,
             generatedPromptCache: data.generatedPromptCache,
-        }).trim();
+        };
+
+        settings.textBlocks.forEach((block) => {
+             markers[block.label] = block.content;
+        });
+
+        console.log(markers)
+
+        data.combinedPrompt = storyStringTemplate(markers).trim();
     };
 
-    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
+
+    eventSource.on(event_types.GENERATION_BEFORE_COMBINE_PROMPTS, orderInput);
+
     storyStringTextarea.addEventListener('change', onStoryStringChange);
-    removeLastMentionOfUserToggle.addEventListener('change', onRemoveLastMentionOfUserChange);
+    removeLastMentionOfUserToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
     removeExampleChatSeparators.addEventListener('change', onRemoveExampleChatSeparatorsChange);
+    resetStoryString.addEventListener('click', onResetStoryStringClick);
+    addBlock.addEventListener('click', onAddBlockClick);
+
+    updateTextBlocks();
 })();

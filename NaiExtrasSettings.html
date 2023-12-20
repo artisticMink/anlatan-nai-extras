@@ -1,0 +1,73 @@
+<div class="inline-drawer m-t-1 wide100p">
+    <div class="inline-drawer-toggle inline-drawer-header">
+        <div style="margin: 0 auto;">
+            <span>NovelAI Extras</span>
+            <a href="https://github.com/artisticMink/anlatan-nai-extras/blob/main/README.md" target="_blank"
+               title="NAI Extras Documentation.">
+                <span class="note-link-span fa-solid fa-circle-question"></span>
+            </a>
+        </div>
+        <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+    </div>
+    <div class="inline-drawer-content">
+        <div class="range-block m-t-1">
+            <label class="checkbox_label widthFreeExpand">
+                <input id="anlatan-nai-extras-settings-removeLastMentionOfUser" type="checkbox">
+                <span data-i18n="Streaming">Do not append character name</span>
+            </label>
+            <div class="toggle-description justifyLeft">
+            <span data-i18n="ST will append '{{char}}:' to the chat to help the model generating chat-style output. Check this to remove it.">
+            By default, ST will append the character name to the end of the chat, to help the model generating a chat-style output. Check this to remove it.</span>
+            </div>
+        </div>
+        <div class="range-block m-t-1">
+            <label class="checkbox_label widthFreeExpand">
+                <input id="anlatan-nai-extras-settings-removeExampleChatSeparators" type="checkbox">
+                <span data-i18n="Streaming">Squash example chats</span>
+            </label>
+            <div class="toggle-description justifyLeft">
+            <span data-i18n="Squashes all example messages into one conversation.">
+            Squashes all example messages into one conversation.</span>
+            </div>
+        </div>
+        <div id="anlatan-nai-extras-storystring" class="range-block m-t-1">
+            <div class="range-block-title">
+                <span>Story Format</span>
+            </div>
+            <div class="toggle-description widthUnset" data-i18n="The order and content of the input sent to NAI.">
+                Order and content of the prompt that will be sent to NAI.
+            </div>
+            <div class="wide100p">
+                <textarea id="anlatan-nai-extras-storystring-template" class="text_pole" rows="12"></textarea>
+            </div>
+        </div>
+        <div id="anlatan-nai-extras-settings">
+            <div class="range-block">
+                <div></div>
+                <div id="anlatan-nai-extras-resetStoryString" class="menu_button menu_button_icon">
+                    <i class="fa-xs fa-solid fa-undo"></i>
+                    <small data-i18n="Reset">Reset</small>
+                </div>
+            </div>
+            <div class="range-block">
+                <div class="range-block-title">
+                    <span>Permanent Text Blocks</span>
+                </div>
+                <div class="toggle-description widthUnset" data-i18n="Create text blocks to use in Story Format.">
+                    Create text blocks to use in Story Format.
+                </div>
+                <div class="flex wide100p">
+                    <input id="anlatan-nai-extras-newblock-label" type="text" class="text_pole textarea_compact" placeholder="Block name"/>
+                    <div id="anlatan-nai-extras-addBlock" class="menu_button menu_button_icon" style="margin-left:1em;">
+                        <i class="fa-xs fa-solid fa-plus"></i>
+                        <small data-i18n="Add block">Add</small>
+                    </div>
+                </div>
+                <textarea id="anlatan-nai-extras-newblock-content" class="text_pole textarea_compact" placeholder="Block content"></textarea>
+            </div>
+            <div id="anlatan-nai-extras-textblocks" class="range-block">
+
+            </div>
+        </div>
+    </div>
+</div>
