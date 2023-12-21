@@ -1,10 +1,10 @@
-import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
+import { extension_settings } from '../../../extensions.js';
 import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
+const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
@@ -22,6 +22,8 @@ const defaultSettings = {
 {{instruct main}}
 {{chat}}`,
 };
+await loadSettings();
+const extensionSettings = extension_settings[extensionName];
 
 /**
  * Save Story Format
@@ -169,7 +171,6 @@ async function loadSettings() {
 }
 
 (async function () {
-    await loadSettings();
     const settings = extensionSettings;
 
     const container = document.getElementById('novel_api-settings');
