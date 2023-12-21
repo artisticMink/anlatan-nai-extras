@@ -143,6 +143,18 @@ const removeLastOccurrence = (target, str) => {
     return target;
 };
 
+const checkAdvancedFormatting = () => {
+    const contextTemplate = document.getElementById('context_presets').value;
+    const element = document.getElementById('anlatan-nai-extras-warning');
+    if ('NovelAI' !== contextTemplate) {
+        element.classList.add('anlatan-nai-extras-warning-active');
+        element.textContent = 'NovelAI template not set. To prevent unwanted formatting go to Advanced Formatting, then select the NovelAI template and disable instruct mode.';
+    } else {
+        element.classList.remove('anlatan-nai-extras-warning-active');
+        element.textContent = '';
+    }
+};
+
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
     if (Object.keys(extension_settings[extensionName]).length === 0) {
@@ -217,7 +229,7 @@ async function loadSettings() {
         };
 
         settings.textBlocks.forEach((block) => {
-             markers[block.label] = block.content;
+            markers[block.label] = block.content;
         });
 
         data.combinedPrompt = storyStringTemplate(markers).trim();
@@ -232,6 +244,8 @@ async function loadSettings() {
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
+
+    document.getElementById('send_but').addEventListener('click', checkAdvancedFormatting);
 
     updateTextBlocks();
 })();

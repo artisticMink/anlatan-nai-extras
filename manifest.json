@@ -4,7 +4,7 @@
   "requires": [],
   "optional": [],
   "js": "index.js",
-  "css": "",
+  "css": "styles.css",
   "author": "maver",
   "version": "1.1.0",
   "homePage": "https://github.com/artisticMink/anlatan-nai-extras/",
