@@ -1,4 +1,4 @@
-# Extra Options for Novel AI
+# Adds extra settings for NovelAI in SillyTavern
 
 ### With this extension you can
 
