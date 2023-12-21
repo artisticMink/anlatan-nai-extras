@@ -10,6 +10,7 @@ const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
+    removeCharAndUser: false,
     textBlocks: [],
     storyString: `{{wiBefore}}
 {{description}}
@@ -73,6 +74,11 @@ function onRemoveBlockClick(event) {
     updateTextBlocks();
 }
 
+function onRemoveCharAndUserClick(event) {
+    extensionSettings.removeCharAndUser = Boolean(event.target.checked);
+    saveSettingsDebounced();
+}
+
 function updateTextBlocks() {
     const container = document.getElementById('anlatan-nai-extras-textblocks');
     container.innerHTML = '';
@@ -94,11 +100,12 @@ function updateTextBlocks() {
     Array.from(document.getElementsByClassName('anlatan-nai-extras-removeBlock')).forEach((element) => element.addEventListener('click', onRemoveBlockClick));
 }
 
-const removeLastOccurrence = (target, str) => {
-    if (typeof target !== 'string' || typeof str !== 'string') {
-        throw new Error('Both target and str must be of type string');
-    }
+const removeFromChat = (user, character, chat) => {
+    const expression = new RegExp(`^${user}:|${character}:`, 'gm');
+    return chat.replace(expression, '');
+};
 
+const removeLastOccurrence = (target, str) => {
     const index = target.lastIndexOf(str);
 
     if (index !== -1 && index === target.length - str.length) {
@@ -125,14 +132,16 @@ async function loadSettings() {
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
 
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
-    const removeLastMentionOfUserToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
+    const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
     const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
     const resetStoryString = document.getElementById('anlatan-nai-extras-resetStoryString');
     const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
+    const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
 
     storyStringTextarea.value = settings.storyString;
-    removeLastMentionOfUserToggle.checked = settings.removeLastMentionOfChar;
+    removeLastMentionOfCharToggle.checked = settings.removeLastMentionOfChar;
     removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
+    removeCharAndUser.checked = settings.removeCharAndUser;
 
     extensionsHandlebars.registerHelper('instruct', function (text) {
         if (!text) return '';
@@ -153,7 +162,11 @@ async function loadSettings() {
             .join('')
             .trim();
 
-        if (settings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
+        if (settings.removeCharAndUser) {
+            chat = removeFromChat(data.user, data.char, chat);
+        } else {
+            if (settings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
+        }
 
         let examples = data.mesExmString;
         if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
@@ -170,8 +183,8 @@ async function loadSettings() {
             main: data.main,
             jailbreak: data.jailbreak,
             chat,
-            user: data.name1,
-            char: data.name2,
+            user: data.user,
+            char: data.char,
             generatedPromptCache: data.generatedPromptCache,
         };
 
@@ -179,19 +192,18 @@ async function loadSettings() {
              markers[block.label] = block.content;
         });
 
-        console.log(markers)
-
         data.combinedPrompt = storyStringTemplate(markers).trim();
     };
 
 
-    eventSource.on(event_types.GENERATION_BEFORE_COMBINE_PROMPTS, orderInput);
+    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
 
     storyStringTextarea.addEventListener('change', onStoryStringChange);
-    removeLastMentionOfUserToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
+    removeLastMentionOfCharToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
     removeExampleChatSeparators.addEventListener('change', onRemoveExampleChatSeparatorsChange);
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
+    removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
 
     updateTextBlocks();
 })();

@@ -16,8 +16,18 @@
                 <span data-i18n="Streaming">Do not append character name</span>
             </label>
             <div class="toggle-description justifyLeft">
-            <span data-i18n="ST will append '{{char}}:' to the chat to help the model generating chat-style output. Check this to remove it.">
-            By default, ST will append the character name to the end of the chat, to help the model generating a chat-style output. Check this to remove it.</span>
+            <span data-i18n="By default, ST will append the character name to the end of the chat, to help the model generating a chat-style output. Enable this if you want to set it yourself.">
+            By default, ST will append the character name to the end of the chat, to help the model generating a chat-style output. Enable this if you want to set it yourself.</span>
+            </div>
+        </div>
+        <div class="range-block m-t-1">
+            <label class="checkbox_label widthFreeExpand">
+                <input id="anlatan-nai-extras-settings-removeCharAndUser" type="checkbox">
+                <span data-i18n="Remove chat-style formatting from the chat.">Remove chat-style formatting from the chat.</span>
+            </label>
+            <div class="toggle-description justifyLeft">
+            <span data-i18n="This will remove all occurrences of 'character:' and 'user:'. Enable this for NAI's default novel-like experience.">
+            This will remove all occurrences of 'character:' and 'user:'. Enable this for NAI's default novel-like experience.</span>
             </div>
         </div>
         <div class="range-block m-t-1">
