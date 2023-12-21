@@ -1,5 +1,5 @@
 import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
-import { event_types, eventSource, saveSettingsDebounced } from '../../../../script.js';
+import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
 const extensionName = 'anlatan-nai-extras';
@@ -143,7 +143,13 @@ const removeLastOccurrence = (target, str) => {
     return target;
 };
 
+const isNai = () => {
+    return 'novel' === main_api;
+};
+
 const checkAdvancedFormatting = () => {
+    if (!isNai) return;
+
     const contextTemplate = document.getElementById('context_presets').value;
     const element = document.getElementById('anlatan-nai-extras-warning');
     if ('NovelAI' !== contextTemplate) {
@@ -193,7 +199,7 @@ async function loadSettings() {
     });
 
     const orderInput = (data) => {
-        if ('novel' !== data.api) return;
+        if (!isNai) return;
 
         const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
 
