@@ -1,0 +1,9 @@
+#anlatan-nai-extras-warning {
+    font-size: small;
+}
+
+.anlatan-nai-extras-warning-active {
+    padding:1em;
+    border: 2px solid var(--fullred);
+}
+

@@ -1,17 +1,22 @@
 # Extra Options for Novel AI
 
-### What does it do? 
+### With this extension you can
 
-It gives you the options to:
 * Format the context yourself.
 * Add re-usable text-blocks to use in your context.
 * Use novel-style or chat-style formatting for your chat.
 
 ### Context Formatting
 #### Story Format Window
-The Story Format window allows you to compose your own context. If you leave the window empty, ST's default formatting will be used. 
-
-You can write text directly as well as use the following markers:
+The Story Format window allows you to compose your own context. If you leave the window empty, ST's default formatting will be used. A simple context might look like this:
+```
+{{description}}
+{{persona}}
+***
+{{preamble}}
+{{chat}}
+```
+You can mix regular text and variables. The following variables can be used:
 ```
 {{user}} - Name of the selected persona
 {{char}} - Name of the selected character
@@ -27,10 +32,10 @@ You can write text directly as well as use the following markers:
 {{preamble}} - The Preamble
 {{chat}} - The chat history
 ```
-Every marker can be formatted as instruction by appending 'instruct'. For example {{instruct description}} will format the character description as instruction.
+Every variable can be formatted as instruction by appending 'instruct'. For example {{instruct description}} will format the character description as instruction.
 
 #### Permanent Text Blocks
-Here you are able to define custom text blocks to use above. Blocks can be used like markers with or without instruct formatting.
+Here you can define your own variables for use within the context.
 
 Example:
 ```
@@ -38,6 +43,8 @@ Block Name: Geesepocalypse
 Block Content: Incorporate the following plot point into the story: Suddenly, a myriad of wild geese appear on the horizon and swoop down on our unsuspecting heroes. They honk wildly as they approach..
 ```
 ``` 
+{{description}}
+{{persona}}
 ***
 {{preamble}}
 {{chat}}
