@@ -1,7 +1,8 @@
-import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
+import { extension_settings } from '../../../extensions.js';
 import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
+const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
