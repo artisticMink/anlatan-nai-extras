@@ -1,9 +1,7 @@
-//You'll likely need to import extension_settings, getContext, and loadExtensionSettings from extensions.js
 import { extension_settings, extensionsHandlebars } from '../../../extensions.js';
 import { event_types, eventSource, saveSettingsDebounced } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
-// Keep track of where your extension is located, name should match repo name
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
@@ -25,27 +23,48 @@ const defaultSettings = {
 {{chat}}`,
 };
 
+/**
+ * Save Story Format
+ * @param event
+ */
 function onStoryStringChange(event) {
     extensionSettings.storyString = event.target.value;
     saveSettingsDebounced();
 }
 
+/**
+ * Toggles removal of last character name
+ * @param event
+ */
 function onRemoveLastMentionOfCharChange(event) {
     extensionSettings.removeLastMentionOfChar = Boolean(event.target.checked);
     saveSettingsDebounced();
 }
 
+/**
+ * Saves whether example message should be squashed
+ * @param event
+ */
 function onRemoveExampleChatSeparatorsChange(event) {
     extensionSettings.removeExampleChatSeparators = Boolean(event.target.checked);
     saveSettingsDebounced();
 }
 
+/**
+ * Resets the Story Format window and settings
+ * @param event
+ */
 function onResetStoryStringClick(event) {
     document.getElementById('anlatan-nai-extras-storystring-template').value = defaultSettings.storyString;
     extensionSettings.storyString = defaultSettings.storyString;
     saveSettingsDebounced();
 }
 
+/**
+ * Adds a text block to settings and update
+ * the text block list
+ * @param event
+ */
 function onAddBlockClick(event) {
     const labelInput = document.getElementById('anlatan-nai-extras-newblock-label');
     const contentInput = document.getElementById('anlatan-nai-extras-newblock-content');
@@ -68,12 +87,21 @@ function onAddBlockClick(event) {
     updateTextBlocks();
 }
 
+/**
+ * Removes a text block to settings and updates
+ * the text block list
+ * @param event
+ */
 function onRemoveBlockClick(event) {
     extensionSettings.textBlocks = extensionSettings.textBlocks.filter(block => event.target.parentElement.dataset.uuid !== block.uuid);
     saveSettingsDebounced();
     updateTextBlocks();
 }
 
+/**
+ * Toggles removal of user and character name occurrences
+ * @param event
+ */
 function onRemoveCharAndUserClick(event) {
     extensionSettings.removeCharAndUser = Boolean(event.target.checked);
     saveSettingsDebounced();
