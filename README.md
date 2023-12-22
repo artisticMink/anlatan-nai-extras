@@ -1,13 +1,13 @@
 # Extra settings for NovelAI in SillyTavern
 
-* Format NAI context yourself.
-* Quickly parts of your context as instructions.
-* Add re-usable text-blocks to use in your context.
-* Use novel-style or chat-style formatting for your chat.
+* Compose the NAI context yourself.
+* Format parts of your context as instructions.
+* Add re-usable blocks to use in your context.
+* Switch between novel-style or chat-style formatting.
 
 ### Context Formatting
 #### Story Format Window
-The Story Format window allows you to compose your own context. If you leave the window empty, ST's default formatting will be used. A simple context might look like this:
+Similiar to Advanced Formatting. If you leave the window empty, ST's default formatting will be used. A simple context might look like this:
 ```
 {{description}}
 {{persona}}
@@ -31,9 +31,9 @@ You can mix regular text and variables. The following variables can be used:
 {{preamble}} - The Preamble
 {{chat}} - The chat history
 ```
-Every variable can be formatted as instruction by appending 'instruct'. For example `{{instruct description}}` will format the character description as instruction. Clios and Kayras instruct capabillities are different to other common models and formatting everything as instruction will not necessairly improve the output though. However, they work very well with short, direct instructions at the very end of the context. 
+Every variable can be formatted as instruction by appending 'instruct'. For example `{{instruct description}}` will format the character description as instruction. Clios and Kayras [instruct capabillities](https://docs.novelai.net/text/specialmodules.html) are different from common models. Formatting everything as instruction will not necessairly improve the output.
 
-A good practice is to use the characters main prompt override to keep the model focused on a certain writing style or scene and then include it in the context like so:
+In this example, the characters main prompt override is used to keep the model focused on a certain scene by including it in the context like so:
 ```
 {{description}}
 {{persona}}
@@ -42,10 +42,10 @@ A good practice is to use the characters main prompt override to keep the model 
 {{chat}}
 {{instruct main}}
 ```
-You can also use [handlebar helpers](https://handlebarsjs.com/guide/builtin-helpers.html).
+It is also possible to use [handlebar helpers](https://handlebarsjs.com/guide/builtin-helpers.html).
 
 #### Permanent Text Blocks
-Here you can define your own variables for use within the context.
+Define variables for use within the context.
 
 Example:
 ```
