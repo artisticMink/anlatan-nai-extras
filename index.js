@@ -109,6 +109,9 @@ function onRemoveCharAndUserClick(event) {
     saveSettingsDebounced();
 }
 
+/**
+ * Empties and fills the text block container.
+ */
 function updateTextBlocks() {
     const container = document.getElementById('anlatan-nai-extras-textblocks');
     container.innerHTML = '';
@@ -130,11 +133,26 @@ function updateTextBlocks() {
     Array.from(document.getElementsByClassName('anlatan-nai-extras-removeBlock')).forEach((element) => element.addEventListener('click', onRemoveBlockClick));
 }
 
+/**
+ * Removes the chat-style formatting from the given chat.
+ *
+ * @param user
+ * @param character
+ * @param chat
+ * @returns {*}
+ */
 const removeFromChat = (user, character, chat) => {
     const expression = new RegExp(`^${user}:|${character}:`, 'gm');
     return chat.replace(expression, '');
 };
 
+/**
+ * Removes the last occurence of target from the given string.
+ *
+ * @param target
+ * @param str
+ * @returns {*|string}
+ */
 const removeLastOccurrence = (target, str) => {
     const index = target.lastIndexOf(str);
 
@@ -145,16 +163,27 @@ const removeLastOccurrence = (target, str) => {
     return target;
 };
 
+/**
+ * Whether NovelAI API is currently selected
+ *
+ * @returns {boolean}
+ */
 const isNai = () => {
     return 'novel' === main_api;
 };
 
+/**
+ * Check if Advanced Formatting is set to the NovelAI preset and
+ * instruct mode is disabled. Show a visual hint otherwise.
+ */
 const checkAdvancedFormatting = () => {
     if (!isNai) return;
 
     const contextTemplate = document.getElementById('context_presets').value;
+    const instructEnabled = document.getElementById('instruct_enabled').checked;
     const element = document.getElementById('anlatan-nai-extras-warning');
-    if ('NovelAI' !== contextTemplate) {
+
+    if ('NovelAI' !== contextTemplate  || true === instructEnabled) {
         element.classList.add('anlatan-nai-extras-warning-active');
         element.textContent = 'NovelAI template not set. To prevent unwanted formatting go to Advanced Formatting, then select the NovelAI template and disable instruct mode.';
     } else {
@@ -163,6 +192,11 @@ const checkAdvancedFormatting = () => {
     }
 };
 
+/**
+ * Populate extension settings
+ *
+ * @returns {Promise<void>}
+ */
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
     if (Object.keys(extension_settings[extensionName]).length === 0) {
@@ -170,6 +204,9 @@ async function loadSettings() {
     }
 }
 
+/**
+ * Entry point for extension
+ */
 (async function () {
     const settings = extensionSettings;
 
@@ -244,6 +281,8 @@ async function loadSettings() {
 
 
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
+    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
+    eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
 
     storyStringTextarea.addEventListener('change', onStoryStringChange);
     removeLastMentionOfCharToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
@@ -251,8 +290,6 @@ async function loadSettings() {
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
-
-    document.getElementById('send_but').addEventListener('click', checkAdvancedFormatting);
 
     updateTextBlocks();
 })();
