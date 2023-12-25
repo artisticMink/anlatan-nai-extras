@@ -1,13 +1,15 @@
 # Extra settings for NovelAI in SillyTavern
 
 * Compose the NAI context yourself.
-* Format parts of your context as instructions.
+* Quickly format blocks of context as instruction.
 * Add re-usable blocks to use in your context.
 * Switch between novel-style or chat-style formatting.
 
 ### Context Formatting
 #### Story Format Window
-Similiar to Advanced Formatting. If you leave the window empty, ST's default formatting will be used. A simple context might look like this:
+This is similar to Advanced Formatting. Leaving the input empty will cause ST to use its default formatting method. 
+
+A simple context might look like this:
 ```
 {{description}}
 {{persona}}
@@ -15,7 +17,10 @@ Similiar to Advanced Formatting. If you leave the window empty, ST's default for
 {{preamble}}
 {{chat}}
 ```
-You can mix regular text and variables. The following variables can be used:
+
+Placing `***` within the context tells the model that the story will begin at this point.
+
+You may mix regular text and variables. The following variables can be used:
 ```
 {{user}} - Name of the selected persona
 {{char}} - Name of the selected character
@@ -31,9 +36,9 @@ You can mix regular text and variables. The following variables can be used:
 {{preamble}} - The Preamble
 {{chat}} - The chat history
 ```
-Every variable can be formatted as instruction by appending 'instruct'. For example `{{instruct description}}` will format the character description as instruction. Clios and Kayras [instruct capabillities](https://docs.novelai.net/text/specialmodules.html) are different from common models. Formatting everything as instruction will not necessairly improve the output.
+Every variable can be formatted as instruction by appending 'instruct'. For example `{{instruct description}}` will format the character description as instruction. NovelAI's official documentation has more information on Clio's and Kayra's [instruct capabilities](https://docs.novelai.net/text/specialmodules.html).
 
-In this example, the characters main prompt override is used to keep the model focused on a certain scene by including it in the context like so:
+In this example, the characters main prompt override is used to tell the model how to handle the next reply:
 ```
 {{description}}
 {{persona}}
@@ -44,13 +49,13 @@ In this example, the characters main prompt override is used to keep the model f
 ```
 It is also possible to use [handlebar helpers](https://handlebarsjs.com/guide/builtin-helpers.html).
 
-#### Permanent Text Blocks
+#### Text Blocks
 Define variables for use within the context.
 
 Example:
 ```
 Block Name: Geesepocalypse
-Block Content: Incorporate the following plot point into the story: Suddenly, a myriad of wild geese appear on the horizon and swoop down on our unsuspecting heroes. They honk wildly as they approach..
+Block Content: Incorporate the following plot point into the story: Suddenly, a myriad of wild geese appear on the horizon and swoop down on our unsuspecting heroes. They honk wildly as they approach.
 ```
 ``` 
 {{description}}
