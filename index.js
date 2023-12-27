@@ -256,11 +256,11 @@ async function loadSettings() {
         if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
 
         const markers = {
-            wiBefore: data.beforeScenarioAnchor,
+            wiBefore: data.worldInfoBefore,
             description: data.description,
             personality: data.personality,
             persona: data.persona,
-            wiAfter: data.afterScenarioAnchor,
+            wiAfter: data.worldInfoAfter,
             examples,
             scenario: data.scenario,
             preamble: data.naiPreamble,
