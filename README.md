@@ -28,6 +28,8 @@ You may mix regular text and variables. The following variables can be used:
 {{jailbreak}} - The cards custom jailbreak prompt
 {{wiBefore}} - Worldinformation Before
 {{wiAfter}} - Worldinformation After
+{{scenarioBefore}} - Information with the 'before scenario' setting. Extensions etc.
+{{scenarioAfter}} - Information with the 'after scenario' setting. Includes Summary.
 {{description}} - Character Description
 {{personality}} - Character Personality
 {{persona}} - Description of the selected persona
@@ -64,4 +66,24 @@ Block Content: Incorporate the following plot point into the story: Suddenly, a 
 {{preamble}}
 {{chat}}
 {{instruct Geesepocalypse}}
+```
+
+### Utility
+
+When using line breaks to keep the Story Format Window readable or generally having messy information, the `{{#trim}}{{/trim}}` helper can be used to tidy up the text. It will remove multiple line breaks and empty spaces.
+
+```
+{{#trim}}
+{{description}}
+
+{{personality}}
+{{persona}}
+
+These are some short storys related to the plot:
+{{examples}}
+{{/trim}}
+***
+{{preamble}}
+{{chat}}
+{Write in the style of a light novel}
 ```

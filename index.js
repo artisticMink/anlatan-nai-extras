@@ -1,6 +1,6 @@
-import { extension_settings } from '../../../extensions.js';
-import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
-import { uuidv4 } from '../../../utils.js';
+import {extension_settings} from '../../../extensions.js';
+import {event_types, eventSource, main_api, saveSettingsDebounced} from '../../../../script.js';
+import {uuidv4} from '../../../utils.js';
 
 const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
@@ -16,7 +16,9 @@ const defaultSettings = {
 {{persona}}
 {{wiAfter}}
 {{examples}}
+{{scenarioBefore}}
 {{scenario}}
+{{scenarioAfter}}
 ***
 {{preamble}}
 {{instruct main}}
@@ -183,7 +185,7 @@ const checkAdvancedFormatting = () => {
     const instructEnabled = document.getElementById('instruct_enabled').checked;
     const element = document.getElementById('anlatan-nai-extras-warning');
 
-    if ('NovelAI' !== contextTemplate  || true === instructEnabled) {
+    if ('NovelAI' !== contextTemplate || true === instructEnabled) {
         element.classList.add('anlatan-nai-extras-warning-active');
         element.textContent = 'NovelAI template not set. To prevent unwanted formatting go to Advanced Formatting, then select the NovelAI template and disable instruct mode.';
     } else {
@@ -239,7 +241,7 @@ async function loadSettings() {
     const orderInput = (data) => {
         if (!isNai) return;
 
-        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
+        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, {noEscape: true});
 
         let chat = data.finalMesSend
             .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
@@ -256,11 +258,13 @@ async function loadSettings() {
         if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
 
         const markers = {
-            wiBefore: data.worldInfoBefore,
             description: data.description,
             personality: data.personality,
             persona: data.persona,
+            wiBefore: data.worldInfoBefore,
             wiAfter: data.worldInfoAfter,
+            scenarioBefore: data.beforeScenarioAnchor,
+            scenarioAfter: data.afterScenarioAnchor,
             examples,
             scenario: data.scenario,
             preamble: data.naiPreamble,
