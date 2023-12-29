@@ -1,6 +1,6 @@
-import {extension_settings} from '../../../extensions.js';
-import {event_types, eventSource, main_api, saveSettingsDebounced} from '../../../../script.js';
-import {uuidv4} from '../../../utils.js';
+import { extension_settings } from '../../../extensions.js';
+import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
+import { uuidv4 } from '../../../utils.js';
 
 const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
@@ -19,7 +19,7 @@ const defaultSettings = {
 {{scenarioBefore}}
 {{scenario}}
 {{scenarioAfter}}
-***
+⁂
 {{preamble}}
 {{instruct main}}
 {{chat}}`,
@@ -206,6 +206,123 @@ async function loadSettings() {
     }
 }
 
+function setupHelpers() {
+    function instructHelper(...args) {
+        if (args && !args[0]) return '';
+        args.pop();
+        return args.map(item => `{ ${item} }`).join(' ');
+    }
+
+    function infoHelper(...args) {
+        if (args && !args[0]) return '';
+        args.pop();
+        return args.map(item => item ? `----\n ${item}` : null).join('\n') + '\n***';
+    }
+
+    function bracketsHelper(...args) {
+        if (args && !args[0]) return '';
+        const first = args.shift();
+        args.pop();
+        if (!args.length) {
+            return `[ ${first} ]`;
+        }
+        return `[ ${first}: ${args.join(', ')} ]`;
+    }
+
+    function multiBracketHelper(...args) {
+        if (args && !args[0]) return '';
+        args.pop();
+        let output = '';
+        let index = 0;
+        args.forEach((value) => {
+            if (index % 2 === 0) {
+                output += `${args[index]}: ${args[index + 1]} ; `;
+            }
+            index++;
+        });
+        return `[ ${output.substring(0, output.length - 3)} ]`;
+    }
+
+    function knowledgeHelper(...text) {
+        if (!text) return '';
+        return `[ Knowledge: ${text.join(', ')} ]`;
+    }
+
+    function attgHelper(author, title, tags, genre) {
+        if (!author && !title && !tags && !genre) return '';
+        return `[ Author: ${author}; Title: ${title}; Tags: ${tags}; Genre: ${genre} ]`;
+    }
+
+    function styleHelper(...tags) {
+        if (!tags) return '';
+        tags.pop();
+        return `[ Style: ${tags.join(', ')} ]`;
+    }
+
+    function newSceneHelper(text) {
+        return '***';
+    }
+
+    function newStoryHelper(text) {
+        return '⁂';
+    }
+
+    function enHelper() {
+        return ' ';
+    }
+
+    function emHelper() {
+        return ' ';
+    }
+
+    function statHelper(text) {
+        return `─ ${text}`;
+    }
+
+    function trimHelper(options) {
+        return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
+    }
+
+    extensionsHandlebars.registerHelper('instruct', instructHelper);
+    extensionsHandlebars.registerHelper('in', instructHelper);
+
+    extensionsHandlebars.registerHelper('info', infoHelper);
+    extensionsHandlebars.registerHelper('i', infoHelper);
+
+    extensionsHandlebars.registerHelper('brackets', bracketsHelper);
+    extensionsHandlebars.registerHelper('b', bracketsHelper);
+
+    extensionsHandlebars.registerHelper('multiBracket', multiBracketHelper);
+    extensionsHandlebars.registerHelper('mb', multiBracketHelper);
+
+    extensionsHandlebars.registerHelper('knowledge', knowledgeHelper);
+    extensionsHandlebars.registerHelper('k', knowledgeHelper);
+
+    extensionsHandlebars.registerHelper('attg', attgHelper);
+    extensionsHandlebars.registerHelper('a', attgHelper);
+
+    extensionsHandlebars.registerHelper('style', styleHelper);
+    extensionsHandlebars.registerHelper('s', styleHelper);
+
+    extensionsHandlebars.registerHelper('new_scene', newSceneHelper);
+    extensionsHandlebars.registerHelper('ns', newSceneHelper);
+
+    extensionsHandlebars.registerHelper('new_story', newStoryHelper);
+    extensionsHandlebars.registerHelper('nst', newStoryHelper);
+
+    extensionsHandlebars.registerHelper('en', enHelper);
+    extensionsHandlebars.registerHelper('e', enHelper);
+
+    extensionsHandlebars.registerHelper('em', emHelper);
+    extensionsHandlebars.registerHelper('m', emHelper);
+
+    extensionsHandlebars.registerHelper('stat', statHelper);
+    extensionsHandlebars.registerHelper('st', statHelper);
+
+    extensionsHandlebars.registerHelper('trim', trimHelper);
+    extensionsHandlebars.registerHelper('t', trimHelper);
+}
+
 /**
  * Entry point for extension
  */
@@ -229,19 +346,12 @@ async function loadSettings() {
     removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
     removeCharAndUser.checked = settings.removeCharAndUser;
 
-    extensionsHandlebars.registerHelper('instruct', function (text) {
-        if (!text) return '';
-        return '{' + text + '}';
-    });
-
-    extensionsHandlebars.registerHelper('trim', function (options) {
-        return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
-    });
+    setupHelpers();
 
     const orderInput = (data) => {
         if (!isNai) return;
 
-        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, {noEscape: true});
+        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
 
         let chat = data.finalMesSend
             .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
