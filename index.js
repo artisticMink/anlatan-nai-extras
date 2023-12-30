@@ -221,18 +221,37 @@ async function loadSettings() {
 }
 
 function setupHelpers() {
+
+    /**
+     * Usage: {{instruct main}}
+     * Output: { <system prompt override text> }
+     */
     function instructHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
         return args.map(item => `{ ${item} }`).join(' ');
     }
 
+    /**
+     * Usage: {{info description}}
+     * Output: ----
+     *         <description content>
+     *         ***
+     */
     function infoHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
         return args.map(item => item ? `----\n ${item}` : null).join('\n') + '\n***';
     }
 
+    /**
+     * Usage:   {{bracket "Knowledge" "anime in 80s" "Macross" "Mecha"}}
+     *          {{bracket "Knowledge" myTextBlock}}
+     *          {{bracket "Style" "chat" "sfw" "detailed"}}
+     *          {{bracket "Five Minutes Later"}}
+     *
+     * Output: [ Knowledge: anime in 80s, Macross, Mecha ]
+     */
     function bracketsHelper(...args) {
         if (args && !args[0]) return '';
         const first = args.shift();
@@ -243,6 +262,10 @@ function setupHelpers() {
         return `[ ${first}: ${args.join(', ')} ]`;
     }
 
+    /**
+     * Usage:  {{multiBracket "Knowledge" "Spaceship Engines" "Style" "science-fiction, technobabble, nerdy"}}
+     * Output: [ Knowledge: Spaceship Engines ; Style: science-fiction, technobabble, nerdy]
+     */
     function multiBracketHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
@@ -257,42 +280,78 @@ function setupHelpers() {
         return `[ ${output.substring(0, output.length - 3)} ]`;
     }
 
+    /**
+     * Usage: {{knowledge "anime in 90s"}}
+     * Output: [ Knowledge: anime in 90s ]
+     */
     function knowledgeHelper(...text) {
         if (!text) return '';
         return `[ Knowledge: ${text.join(', ')} ]`;
     }
 
+    /**
+     * Usage: {{attg "Joe R.R. Martinez" "Dragons with Top-hats" "London, 1820s, dragons" "steampunk, drama"}}
+     * Output: [ Author: Joe R.R. Martinez; Title: Dragons with Top-hats; Tags: London, 1820s, dragons; Genre: steampunk, drama ]
+     */
     function attgHelper(author, title, tags, genre) {
         if (!author && !title && !tags && !genre) return '';
         return `[ Author: ${author}; Title: ${title}; Tags: ${tags}; Genre: ${genre} ]`;
     }
 
+    /**
+     * Usage: {{style "chat" "sfw" "detailed"}}
+     * Output: [ Style: chat, sfw, detailed ]
+     */
     function styleHelper(...tags) {
         if (!tags) return '';
         tags.pop();
         return `[ Style: ${tags.join(', ')} ]`;
     }
 
+    /**
+     * Usage: {{new_scene}}
+     * Output: ***
+     */
     function newSceneHelper(text) {
         return '***';
     }
 
+    /**
+     * Usage: {{new_story}}
+     * Output: ⁂
+     */
     function newStoryHelper(text) {
         return '⁂';
     }
 
+    /**
+     * Usage: {{en}}
+     * Output:  
+     */
     function enHelper() {
         return ' ';
     }
 
+    /**
+     * Usage: {{em}}
+     * Output:  
+     */
     function emHelper() {
         return ' ';
     }
 
+    /**
+     * Usage: {{stat "You gained a new perk: Dragon's breath"}}
+     * Output: ─ You gained a new perk: Dragon's breath
+     */
     function statHelper(text) {
         return `─ ${text}`;
     }
 
+    /**
+     * Usage: {{#trim}}<content>{{/trim}}
+     * Output: <content> with trimmed spaces and double, or more, spaces/line breaks removed.
+     */
     function trimHelper(options) {
         return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
     }
@@ -325,10 +384,8 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('nst', newStoryHelper);
 
     extensionsHandlebars.registerHelper('en', enHelper);
-    extensionsHandlebars.registerHelper('e', enHelper);
 
     extensionsHandlebars.registerHelper('em', emHelper);
-    extensionsHandlebars.registerHelper('m', emHelper);
 
     extensionsHandlebars.registerHelper('stat', statHelper);
     extensionsHandlebars.registerHelper('st', statHelper);
