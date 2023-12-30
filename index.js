@@ -9,6 +9,7 @@ const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
     removeCharAndUser: false,
+    pruneChatBy: 0,
     textBlocks: [],
     storyString: `{{wiBefore}}
 {{description}}
@@ -112,6 +113,15 @@ function onRemoveCharAndUserClick(event) {
 }
 
 /**
+ * Sets chat messages to be pruned from end of the chat
+ * @param event
+ */
+function onChatPruneChange(event) {
+    extensionSettings.pruneChatBy = Number(event.target.value);
+    saveSettingsDebounced();
+}
+
+/**
  * Empties and fills the text block container.
  */
 function updateTextBlocks() {
@@ -149,7 +159,7 @@ const removeFromChat = (user, character, chat) => {
 };
 
 /**
- * Removes the last occurence of target from the given string.
+ * Removes the last occurrence of target from the given string.
  *
  * @param target
  * @param str
@@ -196,29 +206,52 @@ const checkAdvancedFormatting = () => {
 
 /**
  * Populate extension settings
- *
- * @returns {Promise<void>}
  */
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
-    if (Object.keys(extension_settings[extensionName]).length === 0) {
-        Object.assign(extension_settings[extensionName], defaultSettings);
+
+    const extensionKeys = Object.keys(extension_settings[extensionName]);
+    const defaultKeys = Object.keys(defaultSettings);
+
+    for (const key of defaultKeys) {
+        if (!extensionKeys.includes(key)) {
+            extension_settings[extensionName][key] = defaultSettings[key];
+        }
     }
 }
 
 function setupHelpers() {
+
+    /**
+     * Usage: {{instruct main}}
+     * Output: { <system prompt override text> }
+     */
     function instructHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
         return args.map(item => `{ ${item} }`).join(' ');
     }
 
+    /**
+     * Usage: {{info description}}
+     * Output: ----
+     *         <description content>
+     *         ***
+     */
     function infoHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
         return args.map(item => item ? `----\n ${item}` : null).join('\n') + '\n***';
     }
 
+    /**
+     * Usage:   {{bracket "Knowledge" "anime in 80s" "Macross" "Mecha"}}
+     *          {{bracket "Knowledge" myTextBlock}}
+     *          {{bracket "Style" "chat" "sfw" "detailed"}}
+     *          {{bracket "Five Minutes Later"}}
+     *
+     * Output: [ Knowledge: anime in 80s, Macross, Mecha ]
+     */
     function bracketsHelper(...args) {
         if (args && !args[0]) return '';
         const first = args.shift();
@@ -229,6 +262,10 @@ function setupHelpers() {
         return `[ ${first}: ${args.join(', ')} ]`;
     }
 
+    /**
+     * Usage:  {{multiBracket "Knowledge" "Spaceship Engines" "Style" "science-fiction, technobabble, nerdy"}}
+     * Output: [ Knowledge: Spaceship Engines ; Style: science-fiction, technobabble, nerdy]
+     */
     function multiBracketHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
@@ -243,42 +280,78 @@ function setupHelpers() {
         return `[ ${output.substring(0, output.length - 3)} ]`;
     }
 
+    /**
+     * Usage: {{knowledge "anime in 90s"}}
+     * Output: [ Knowledge: anime in 90s ]
+     */
     function knowledgeHelper(...text) {
         if (!text) return '';
         return `[ Knowledge: ${text.join(', ')} ]`;
     }
 
+    /**
+     * Usage: {{attg "Joe R.R. Martinez" "Dragons with Top-hats" "London, 1820s, dragons" "steampunk, drama"}}
+     * Output: [ Author: Joe R.R. Martinez; Title: Dragons with Top-hats; Tags: London, 1820s, dragons; Genre: steampunk, drama ]
+     */
     function attgHelper(author, title, tags, genre) {
         if (!author && !title && !tags && !genre) return '';
         return `[ Author: ${author}; Title: ${title}; Tags: ${tags}; Genre: ${genre} ]`;
     }
 
+    /**
+     * Usage: {{style "chat" "sfw" "detailed"}}
+     * Output: [ Style: chat, sfw, detailed ]
+     */
     function styleHelper(...tags) {
         if (!tags) return '';
         tags.pop();
         return `[ Style: ${tags.join(', ')} ]`;
     }
 
+    /**
+     * Usage: {{new_scene}}
+     * Output: ***
+     */
     function newSceneHelper(text) {
         return '***';
     }
 
+    /**
+     * Usage: {{new_story}}
+     * Output: ⁂
+     */
     function newStoryHelper(text) {
         return '⁂';
     }
 
+    /**
+     * Usage: {{en}}
+     * Output:  
+     */
     function enHelper() {
         return ' ';
     }
 
+    /**
+     * Usage: {{em}}
+     * Output:  
+     */
     function emHelper() {
         return ' ';
     }
 
+    /**
+     * Usage: {{stat "You gained a new perk: Dragon's breath"}}
+     * Output: ─ You gained a new perk: Dragon's breath
+     */
     function statHelper(text) {
         return `─ ${text}`;
     }
 
+    /**
+     * Usage: {{#trim}}<content>{{/trim}}
+     * Output: <content> with trimmed spaces and double, or more, spaces/line breaks removed.
+     */
     function trimHelper(options) {
         return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
     }
@@ -311,10 +384,8 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('nst', newStoryHelper);
 
     extensionsHandlebars.registerHelper('en', enHelper);
-    extensionsHandlebars.registerHelper('e', enHelper);
 
     extensionsHandlebars.registerHelper('em', emHelper);
-    extensionsHandlebars.registerHelper('m', emHelper);
 
     extensionsHandlebars.registerHelper('stat', statHelper);
     extensionsHandlebars.registerHelper('st', statHelper);
@@ -340,11 +411,13 @@ function setupHelpers() {
     const resetStoryString = document.getElementById('anlatan-nai-extras-resetStoryString');
     const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
     const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
+    const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
 
     storyStringTextarea.value = settings.storyString;
     removeLastMentionOfCharToggle.checked = settings.removeLastMentionOfChar;
     removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
     removeCharAndUser.checked = settings.removeCharAndUser;
+    chatPrune.value = settings.pruneChatBy;
 
     setupHelpers();
 
@@ -353,7 +426,12 @@ function setupHelpers() {
 
         const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
 
-        let chat = data.finalMesSend
+        const chatData = structuredClone(data.finalMesSend);
+
+        const pruneChatBy = chatPrune.value;
+        if (pruneChatBy) chatData.splice(0, pruneChatBy);
+
+        let chat = chatData
             .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
             .join('')
             .trim();
@@ -393,7 +471,6 @@ function setupHelpers() {
         data.combinedPrompt = storyStringTemplate(markers).trim();
     };
 
-
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
     eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
@@ -404,6 +481,7 @@ function setupHelpers() {
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
+    chatPrune.addEventListener('change', onChatPruneChange);
 
     updateTextBlocks();
 })();
