@@ -9,6 +9,7 @@ const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
     removeCharAndUser: false,
+    pruneChatBy: 0,
     textBlocks: [],
     storyString: `{{wiBefore}}
 {{description}}
@@ -112,6 +113,15 @@ function onRemoveCharAndUserClick(event) {
 }
 
 /**
+ * Sets chat messages to be pruned from end of the chat
+ * @param event
+ */
+function onChatPruneChange(event) {
+    extensionSettings.pruneChatBy = Number(event.target.value);
+    saveSettingsDebounced();
+}
+
+/**
  * Empties and fills the text block container.
  */
 function updateTextBlocks() {
@@ -149,7 +159,7 @@ const removeFromChat = (user, character, chat) => {
 };
 
 /**
- * Removes the last occurence of target from the given string.
+ * Removes the last occurrence of target from the given string.
  *
  * @param target
  * @param str
@@ -196,13 +206,17 @@ const checkAdvancedFormatting = () => {
 
 /**
  * Populate extension settings
- *
- * @returns {Promise<void>}
  */
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
-    if (Object.keys(extension_settings[extensionName]).length === 0) {
-        Object.assign(extension_settings[extensionName], defaultSettings);
+
+    const extensionKeys = Object.keys(extension_settings[extensionName]);
+    const defaultKeys = Object.keys(defaultSettings);
+
+    for (const key of defaultKeys) {
+        if (!extensionKeys.includes(key)) {
+            extension_settings[extensionName][key] = defaultSettings[key];
+        }
     }
 }
 
@@ -340,11 +354,13 @@ function setupHelpers() {
     const resetStoryString = document.getElementById('anlatan-nai-extras-resetStoryString');
     const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
     const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
+    const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
 
     storyStringTextarea.value = settings.storyString;
     removeLastMentionOfCharToggle.checked = settings.removeLastMentionOfChar;
     removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
     removeCharAndUser.checked = settings.removeCharAndUser;
+    chatPrune.value = settings.pruneChatBy;
 
     setupHelpers();
 
@@ -353,7 +369,12 @@ function setupHelpers() {
 
         const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
 
-        let chat = data.finalMesSend
+        const chatData = structuredClone(data.finalMesSend);
+
+        const pruneChatBy = chatPrune.value;
+        if (pruneChatBy) chatData.splice(0, pruneChatBy);
+
+        let chat = chatData
             .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
             .join('')
             .trim();
@@ -393,7 +414,6 @@ function setupHelpers() {
         data.combinedPrompt = storyStringTemplate(markers).trim();
     };
 
-
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
     eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
@@ -404,6 +424,7 @@ function setupHelpers() {
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
+    chatPrune.addEventListener('change', onChatPruneChange);
 
     updateTextBlocks();
 })();
