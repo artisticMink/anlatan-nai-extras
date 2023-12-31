@@ -45,17 +45,21 @@
             <div class="range-block-title">
                 <span>Story Format</span>
             </div>
-            <div class="toggle-description widthUnset" data-i18n="The order and content of the input sent to NAI.">
-                Order and content of the prompt that will be sent to NAI.
+            <div class="toggle-description widthUnset">
+                <div id="anlatan-nai-extras-characterStatus"><span>Current Settings: </span><span id="anlatan-nai-extras-characterSelected">Default</span></div>
             </div>
             <div class="wide100p">
-                <textarea id="anlatan-nai-extras-storystring-template" class="text_pole" rows="12"></textarea>
+                <textarea id="anlatan-nai-extras-storystring-template" class="text_pole" rows="12" spellcheck="false"></textarea>
             </div>
         </div>
         <div id="anlatan-nai-extras-settings">
-            <div class="range-block">
+            <div class="range-block justifyContentFlexStart">
                 <div>
                     <span style="margin-right: 3px;" class="toggle-description">Chat Prune: </span><input id="anlatan-nai-extras-chatPrune" class="text_pole textarea_compact" type="text" placeholder="0" />
+                </div>
+                <div id="anlatan-nai-extras-saveToCharacter" class="menu_button menu_button_icon">
+                    <i class="fa-xs fa-solid fa-save"></i>
+                    <small data-i18n="Save">Save</small>
                 </div>
                 <div id="anlatan-nai-extras-resetStoryString" class="menu_button menu_button_icon">
                     <i class="fa-xs fa-solid fa-undo"></i>
