@@ -1,5 +1,13 @@
 import { extension_settings } from '../../../extensions.js';
-import { event_types, eventSource, main_api, saveSettingsDebounced } from '../../../../script.js';
+import {
+    callPopup,
+    characters,
+    event_types,
+    eventSource,
+    main_api,
+    saveSettingsDebounced,
+    this_chid,
+} from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
 const extensionsHandlebars = Handlebars.create();
@@ -11,6 +19,7 @@ const defaultSettings = {
     removeCharAndUser: false,
     pruneChatBy: 0,
     textBlocks: [],
+    characters: {},
     storyString: `{{wiBefore}}
 {{description}}
 {{personality}}
@@ -25,8 +34,9 @@ const defaultSettings = {
 {{instruct main}}
 {{chat}}`,
 };
-await loadSettings();
-const extensionSettings = extension_settings[extensionName];
+
+loadSettings();
+let extensionSettings = extension_settings[extensionName];
 
 /**
  * Save Story Format
@@ -121,6 +131,69 @@ function onChatPruneChange(event) {
     saveSettingsDebounced();
 }
 
+function onSaveToCharacterClick() {
+    if (!this_chid) return;
+
+    const popupMessage = `
+<br>
+<p>
+<b>Bind the current settings to the selected character?</b>
+</p>
+<p>
+Your settings are copied to this character and loaded whenever this character is selected. If you change the character name, your settings will be lost.
+</p>`;
+    callPopup(popupMessage, 'confirm').then(accept => {
+        if (true !== accept) return;
+
+        copySettingsToCharacterSettings(this_chid);
+        swapSettingsSource(this_chid);
+        saveSettingsDebounced();
+    });
+}
+
+function copySettingsToCharacterSettings(characterId) {
+    const name = characters[characterId].data.name;
+    const characterSettings = structuredClone(extensionSettings);
+    delete characterSettings.characters;
+    extension_settings[extensionName].characters[name] = characterSettings;
+
+}
+
+function swapSettingsSource(characterId) {
+    swapToDefaultSettings();
+
+    if (characterId) {
+        const characterName = characters[characterId].data.name;
+        if (Object.prototype.hasOwnProperty.call(extensionSettings.characters, characterName)) {
+            extensionSettings = extensionSettings.characters[characterName];
+            document.getElementById('anlatan-nai-extras-characterSelected').textContent = characterName;
+        }
+    }
+
+    updateUi();
+}
+
+function swapToDefaultSettings() {
+    extensionSettings = extension_settings[extensionName];
+    document.getElementById('anlatan-nai-extras-characterSelected').textContent = 'Default';
+}
+
+function updateUi () {
+    const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
+    const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
+    const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
+    const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
+    const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
+
+    storyStringTextarea.value = extensionSettings.storyString;
+    removeLastMentionOfCharToggle.checked = extensionSettings.removeLastMentionOfChar;
+    removeExampleChatSeparators.checked = extensionSettings.removeExampleChatSeparators;
+    removeCharAndUser.checked = extensionSettings.removeCharAndUser;
+    chatPrune.value = extensionSettings.pruneChatBy;
+
+    updateTextBlocks();
+}
+
 /**
  * Empties and fills the text block container.
  */
@@ -207,7 +280,7 @@ const checkAdvancedFormatting = () => {
 /**
  * Populate extension settings
  */
-async function loadSettings() {
+function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
 
     const extensionKeys = Object.keys(extension_settings[extensionName]);
@@ -284,9 +357,10 @@ function setupHelpers() {
      * Usage: {{knowledge "anime in 90s"}}
      * Output: [ Knowledge: anime in 90s ]
      */
-    function knowledgeHelper(...text) {
-        if (!text) return '';
-        return `[ Knowledge: ${text.join(', ')} ]`;
+    function knowledgeHelper(...args) {
+        if (args && !args[0]) return '';
+        args.pop();
+        return `[ Knowledge: ${args.join(', ')} ]`;
     }
 
     /**
@@ -302,10 +376,11 @@ function setupHelpers() {
      * Usage: {{style "chat" "sfw" "detailed"}}
      * Output: [ Style: chat, sfw, detailed ]
      */
-    function styleHelper(...tags) {
-        if (!tags) return '';
-        tags.pop();
-        return `[ Style: ${tags.join(', ')} ]`;
+    function styleHelper(...args) {
+        if (args && !args[0]) return '';
+        args.pop();
+        if (!args) return '';
+        return `[ Style: ${args.join(', ')} ]`;
     }
 
     /**
@@ -394,16 +469,71 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('t', trimHelper);
 }
 
+function orderInput (data) {
+    if (!isNai) return;
+
+    const storyStringTemplate = extensionsHandlebars.compile(`${extensionSettings.storyString} {{generatedPromptCache}}`, { noEscape: true });
+
+    const chatData = structuredClone(data.finalMesSend);
+
+    if (extensionSettings.pruneChatBy) chatData.splice(0, extensionSettings.pruneChatBy);
+
+    let chat = chatData
+        .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
+        .join('')
+        .trim();
+
+    if (extensionSettings.removeCharAndUser) {
+        chat = removeFromChat(data.user, data.char, chat);
+    } else {
+        if (extensionSettings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
+    }
+
+    let examples = data.mesExmString;
+    if (extensionSettings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
+
+    const markers = {
+        description: data.description,
+        personality: data.personality,
+        persona: data.persona,
+        wiBefore: data.worldInfoBefore,
+        wiAfter: data.worldInfoAfter,
+        scenarioBefore: data.beforeScenarioAnchor,
+        scenarioAfter: data.afterScenarioAnchor,
+        examples,
+        scenario: data.scenario,
+        preamble: data.naiPreamble,
+        main: data.main,
+        jailbreak: data.jailbreak,
+        chat,
+        user: data.user,
+        char: data.char,
+        generatedPromptCache: data.generatedPromptCache,
+    };
+
+    extensionSettings.textBlocks.forEach((block) => {
+        markers[block.label] = block.content;
+    });
+
+    data.combinedPrompt = storyStringTemplate(markers).trim();
+}
+
 /**
  * Entry point for extension
  */
 (async function () {
-    const settings = extensionSettings;
-
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
 
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
+
+    updateUi();
+    setupHelpers();
+
+    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
+    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
+    eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
+    eventSource.on(event_types.CHAT_CHANGED, () => swapSettingsSource(this_chid));
 
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
     const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
@@ -412,68 +542,7 @@ function setupHelpers() {
     const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
     const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
     const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
-
-    storyStringTextarea.value = settings.storyString;
-    removeLastMentionOfCharToggle.checked = settings.removeLastMentionOfChar;
-    removeExampleChatSeparators.checked = settings.removeExampleChatSeparators;
-    removeCharAndUser.checked = settings.removeCharAndUser;
-    chatPrune.value = settings.pruneChatBy;
-
-    setupHelpers();
-
-    const orderInput = (data) => {
-        if (!isNai) return;
-
-        const storyStringTemplate = extensionsHandlebars.compile(`${settings.storyString} {{generatedPromptCache}}`, { noEscape: true });
-
-        const chatData = structuredClone(data.finalMesSend);
-
-        const pruneChatBy = chatPrune.value;
-        if (pruneChatBy) chatData.splice(0, pruneChatBy);
-
-        let chat = chatData
-            .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
-            .join('')
-            .trim();
-
-        if (settings.removeCharAndUser) {
-            chat = removeFromChat(data.user, data.char, chat);
-        } else {
-            if (settings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
-        }
-
-        let examples = data.mesExmString;
-        if (settings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
-
-        const markers = {
-            description: data.description,
-            personality: data.personality,
-            persona: data.persona,
-            wiBefore: data.worldInfoBefore,
-            wiAfter: data.worldInfoAfter,
-            scenarioBefore: data.beforeScenarioAnchor,
-            scenarioAfter: data.afterScenarioAnchor,
-            examples,
-            scenario: data.scenario,
-            preamble: data.naiPreamble,
-            main: data.main,
-            jailbreak: data.jailbreak,
-            chat,
-            user: data.user,
-            char: data.char,
-            generatedPromptCache: data.generatedPromptCache,
-        };
-
-        settings.textBlocks.forEach((block) => {
-            markers[block.label] = block.content;
-        });
-
-        data.combinedPrompt = storyStringTemplate(markers).trim();
-    };
-
-    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
-    eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
-    eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
+    const saveToCharacter = document.getElementById('anlatan-nai-extras-saveToCharacter');
 
     storyStringTextarea.addEventListener('change', onStoryStringChange);
     removeLastMentionOfCharToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
@@ -482,6 +551,7 @@ function setupHelpers() {
     addBlock.addEventListener('click', onAddBlockClick);
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
     chatPrune.addEventListener('change', onChatPruneChange);
+    saveToCharacter.addEventListener('click', onSaveToCharacterClick);
 
     updateTextBlocks();
 })();
