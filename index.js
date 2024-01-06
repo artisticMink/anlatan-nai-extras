@@ -1,11 +1,11 @@
-import { extension_settings } from '../../../extensions.js';
+import { extension_settings, getContext } from '../../../extensions.js';
 import {
     callPopup,
     characters,
     event_types,
     eventSource,
     main_api,
-    saveSettingsDebounced,
+    saveSettingsDebounced, substituteParams,
     this_chid,
 } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
@@ -20,18 +20,14 @@ const defaultSettings = {
     pruneChatBy: 0,
     textBlocks: [],
     characters: {},
-    storyString: `{{wiBefore}}
-{{description}}
-{{personality}}
-{{persona}}
-{{wiAfter}}
-{{examples}}
-{{scenarioBefore}}
-{{scenario}}
-{{scenarioAfter}}
-⁂
+    storyString: `⁂
 {{preamble}}
-{{instruct main}}
+{{info (c "{{char}}:" description personality) (c "{{user}}:" persona)}}
+{{info wiBefore wiAfter }}
+{{info scenarioBefore scenarioAfter}}
+{{examples}}
+***
+{{b scenario}}
 {{chat}}`,
 };
 
@@ -156,10 +152,11 @@ function copySettingsToCharacterSettings(characterId) {
     const characterSettings = structuredClone(extensionSettings);
     delete characterSettings.characters;
     extension_settings[extensionName].characters[name] = characterSettings;
-
 }
 
-function swapSettingsSource(characterId) {
+function swapSettingsSource(characterId = null) {
+    if (!isNai) return;
+
     swapToDefaultSettings();
 
     if (characterId) {
@@ -314,7 +311,8 @@ function setupHelpers() {
     function infoHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
-        return args.map(item => item ? `----\n ${item}` : null).join('\n') + '\n***';
+        const information =  args.filter(item => '' !== item).map(item => `----\n ${item}`).join('\n');
+        return information ? information + '\n***' : '';
     }
 
     /**
@@ -431,6 +429,16 @@ function setupHelpers() {
         return options.fn(this).replace(/\s{3,}/g, ' ').replace(/\n{3,}/g, '\n').trim();
     }
 
+    /**
+     * Usage: {{concat "Foo" "Bar"}}
+     * Output: Foo Bar
+     */
+    function concatHelper(...args) {
+        args.pop();
+        if (2 > args.filter(item => '' !== item).length) return ''
+        return args.join(' ');
+    }
+
     extensionsHandlebars.registerHelper('instruct', instructHelper);
     extensionsHandlebars.registerHelper('in', instructHelper);
 
@@ -467,6 +475,9 @@ function setupHelpers() {
 
     extensionsHandlebars.registerHelper('trim', trimHelper);
     extensionsHandlebars.registerHelper('t', trimHelper);
+
+    extensionsHandlebars.registerHelper('concat', concatHelper);
+    extensionsHandlebars.registerHelper('c', concatHelper);
 }
 
 function orderInput (data) {
@@ -488,6 +499,8 @@ function orderInput (data) {
     } else {
         if (extensionSettings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
     }
+
+    data.mesSendString = chat;
 
     let examples = data.mesExmString;
     if (extensionSettings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
@@ -515,7 +528,11 @@ function orderInput (data) {
         markers[block.label] = block.content;
     });
 
-    data.combinedPrompt = storyStringTemplate(markers).trim();
+    let combinedPrompt = storyStringTemplate(markers).trim();
+
+    combinedPrompt = substituteParams(combinedPrompt, data.user, data.char, null, null);
+
+    data.combinedPrompt = combinedPrompt;
 }
 
 /**
