@@ -224,7 +224,7 @@ function updateTextBlocks() {
  * @returns {*}
  */
 const removeFromChat = (user, character, chat) => {
-    const expression = new RegExp(`^${user}:|${character}:`, 'gm');
+    const expression = new RegExp(`^${user}: ?|${character}: ?`, 'gm');
     return chat.replace(expression, '');
 };
 
@@ -491,8 +491,7 @@ function orderInput (data) {
 
     let chat = chatData
         .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
-        .join('')
-        .trim();
+        .join('');
 
     if (extensionSettings.removeCharAndUser) {
         chat = removeFromChat(data.user, data.char, chat);
