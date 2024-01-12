@@ -1,11 +1,12 @@
-import { extension_settings, getContext } from '../../../extensions.js';
+import { extension_settings } from '../../../extensions.js';
 import {
     callPopup,
     characters,
+    chat,
     event_types,
     eventSource,
     main_api,
-    saveSettingsDebounced, substituteParams,
+    saveSettingsDebounced, sendTextareaMessage, substituteParams,
     this_chid,
 } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
@@ -499,8 +500,6 @@ function orderInput (data) {
         if (extensionSettings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
     }
 
-    data.mesSendString = chat;
-
     let examples = data.mesExmString;
     if (extensionSettings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
 
@@ -534,22 +533,96 @@ function orderInput (data) {
     data.combinedPrompt = combinedPrompt;
 }
 
+function onNaiModuleChange(event) {
+    if ('theme_textadventure' === event.target.value) {
+        setupTextAdventure();
+    } else {
+        document.getElementById('anlatan-nai-extras-send-action').remove();
+        document.getElementById('anlatan-nai-extras-send-dialogue').remove();
+    }
+}
+
+function setupTextAdventure() {
+    const sendButton = document.getElementById('send_but');
+
+    const actionButton = '<div id="anlatan-nai-extras-send-action" class="fa-solid fa-running" title="Make an action" data-i18n="[title]Make an action"></div>';
+    sendButton.insertAdjacentHTML('beforebegin', actionButton);
+    document.getElementById('anlatan-nai-extras-send-action').addEventListener('click', () => {
+        const sendTextarea =  document.getElementById('send_textarea');
+        const text = sendTextarea.value;
+
+        if (text === 'l') {
+            sendTextarea.value = '> You look around.';
+        } else if (text === 'i') {
+            sendTextarea.value = '> You check your inventory.';
+        } else if (text.startsWith('x')) {
+            sendTextarea.value = `> You examine ${text.replace('x', '').trim()}.`;
+        } else if (text === 'w') {
+            sendTextarea.value = '> You wait.';
+        } else {
+            sendTextarea.value = `> You ${text}.`;
+        }
+
+        sendTextareaMessage();
+    });
+
+    const dialogueButton = '<div id="anlatan-nai-extras-send-dialogue" class="fa-solid fa-comment" title="Say something" data-i18n="[title]Say something"></div>';
+    sendButton.insertAdjacentHTML('beforebegin', dialogueButton);
+    document.getElementById('anlatan-nai-extras-send-dialogue').addEventListener('click', () => {
+        const sendTextarea =  document.getElementById('send_textarea');
+        let text = sendTextarea.value;
+
+        if (true === isLastChar(text, '?')) text = `> You ask "${text}."`;
+        else if (true === isLastChar(text, '!')) text = `> You yell "${text}."`;
+        else text = `> You say "${text}."`;
+
+        sendTextarea.value = text;
+
+        sendTextareaMessage();
+    });
+}
+
+function isLastChar(input, character)  {
+    if (input.length === 0) {
+        return false;
+    }
+
+    const lastChar = input.slice(-1);
+
+    // Compare the last character with the target character
+    return character === lastChar;
+}
+
 /**
  * Entry point for extension
  */
 (async function () {
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
+    const naiModuleSelect = document.getElementById('nai_prefix');
 
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
 
     updateUi();
     setupHelpers();
 
+    if ('theme_textadventure' === naiModuleSelect.value) setupTextAdventure();
+
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
     eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
     eventSource.on(event_types.CHAT_CHANGED, () => swapSettingsSource(this_chid));
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (chatId) => {
+        if ('theme_textadventure' === naiModuleSelect.value) {
+            // Every time this function is executed, a puppy dies on planet earth.
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+            document.querySelector('.last_mes .mes_edit').click();
+            sleep(30);
+            document.getElementById('curEditTextarea').value = document.getElementById('curEditTextarea').value.replace('\n>', '');
+            sleep(30);
+            document.querySelector('.last_mes .mes_edit_done').click();
+        }
+    });
 
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
     const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
@@ -568,6 +641,7 @@ function orderInput (data) {
     removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
     chatPrune.addEventListener('change', onChatPruneChange);
     saveToCharacter.addEventListener('click', onSaveToCharacterClick);
+    naiModuleSelect.addEventListener('change', onNaiModuleChange);
 
     updateTextBlocks();
 })();

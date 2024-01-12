@@ -21,3 +21,15 @@
     margin-left: auto;
     margin-right: 1em;
 }
+
+.mes_text blockquote {
+    border: 1px solid var(--SmartThemeBorderColor);
+    padding: 1em;
+}
+
+.mes_text blockquote p {
+    color: var(--SmartThemeEmColor);
+    margin: 0;
+    padding: 0;
+}
+
