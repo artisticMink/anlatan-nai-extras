@@ -2,7 +2,6 @@ import { extension_settings } from '../../../extensions.js';
 import {
     callPopup,
     characters,
-    chat,
     event_types,
     eventSource,
     main_api,
@@ -11,24 +10,35 @@ import {
 } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
 
+class NaiMode {
+    static CHAT = 1;
+    static STORY = 2;
+    static ADVENTURE = 3;
+}
+
 const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
-    removeCharAndUser: false,
+    mode: NaiMode.CHAT,
     pruneChatBy: 0,
     textBlocks: [],
     characters: {},
     storyString: `⁂
 {{preamble}}
-{{info (c "{{char}}:" description personality) (c "{{user}}:" persona)}}
-{{info wiBefore wiAfter }}
-{{info scenarioBefore scenarioAfter}}
-{{examples}}
-***
-{{b scenario}}
+----
+{{char}}:
+{{description}}
+{{personality}}
+----
+{{user}}:
+{{persona}}
+----
+{{wiBefore}}
+{{wiAfter }}
+{{#if examples}} {{examples}} {{else}} *** {{/if}}
 {{chat}}`,
 };
 
@@ -111,15 +121,6 @@ function onRemoveBlockClick(event) {
 }
 
 /**
- * Toggles removal of user and character name occurrences
- * @param event
- */
-function onRemoveCharAndUserClick(event) {
-    extensionSettings.removeCharAndUser = Boolean(event.target.checked);
-    saveSettingsDebounced();
-}
-
-/**
  * Sets chat messages to be pruned from end of the chat
  * @param event
  */
@@ -176,19 +177,20 @@ function swapToDefaultSettings() {
     document.getElementById('anlatan-nai-extras-characterSelected').textContent = 'Default';
 }
 
-function updateUi () {
+function updateUi() {
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
     const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
     const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
-    const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
     const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
+    const naiModeSelect = document.getElementById('anlatan-nai-extras-mode');
 
     storyStringTextarea.value = extensionSettings.storyString;
     removeLastMentionOfCharToggle.checked = extensionSettings.removeLastMentionOfChar;
     removeExampleChatSeparators.checked = extensionSettings.removeExampleChatSeparators;
-    removeCharAndUser.checked = extensionSettings.removeCharAndUser;
     chatPrune.value = extensionSettings.pruneChatBy;
+    naiModeSelect.value = extensionSettings.mode ?? NaiMode.CHAT;
 
+    setupTextAdventure();
     updateTextBlocks();
 }
 
@@ -312,7 +314,7 @@ function setupHelpers() {
     function infoHelper(...args) {
         if (args && !args[0]) return '';
         args.pop();
-        const information =  args.filter(item => '' !== item).map(item => `----\n ${item}`).join('\n');
+        const information = args.filter(item => '' !== item).map(item => `----\n ${item}`).join('\n');
         return information ? information + '\n***' : '';
     }
 
@@ -436,7 +438,7 @@ function setupHelpers() {
      */
     function concatHelper(...args) {
         args.pop();
-        if (2 > args.filter(item => '' !== item).length) return ''
+        if (2 > args.filter(item => '' !== item).length) return '';
         return args.join(' ');
     }
 
@@ -481,11 +483,10 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('c', concatHelper);
 }
 
-function orderInput (data) {
+function orderInput(data) {
     if (!isNai) return;
 
     const storyStringTemplate = extensionsHandlebars.compile(`${extensionSettings.storyString} {{generatedPromptCache}}`, { noEscape: true });
-
     const chatData = structuredClone(data.finalMesSend);
 
     if (extensionSettings.pruneChatBy) chatData.splice(0, extensionSettings.pruneChatBy);
@@ -494,7 +495,7 @@ function orderInput (data) {
         .map((e) => `${e.extensionPrompts.join('')}${e.message}`)
         .join('');
 
-    if (extensionSettings.removeCharAndUser) {
+    if (storyMode() || adventureMode()) {
         chat = removeFromChat(data.user, data.char, chat);
     } else {
         if (extensionSettings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
@@ -533,22 +534,38 @@ function orderInput (data) {
     data.combinedPrompt = combinedPrompt;
 }
 
-function onNaiModuleChange(event) {
-    if ('theme_textadventure' === event.target.value) {
-        setupTextAdventure();
-    } else {
-        document.getElementById('anlatan-nai-extras-send-action').remove();
-        document.getElementById('anlatan-nai-extras-send-dialogue').remove();
-    }
+function storyMode() {
+    return NaiMode.STORY === extensionSettings.mode;
+}
+
+function chatMode() {
+    return NaiMode.CHAT === extensionSettings.mode;
+}
+
+function adventureMode() {
+    return NaiMode.ADVENTURE === extensionSettings.mode;
 }
 
 function setupTextAdventure() {
-    const sendButton = document.getElementById('send_but');
+    document.getElementById('anlatan-nai-extras-send-action')?.remove();
+    document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
 
+    const naiPrefixSelect = document.getElementById('nai_prefix');
+    if (false === adventureMode()) {
+        if ('theme_textadventure' === naiPrefixSelect.value) {
+            naiPrefixSelect.value = 'vanilla';
+            naiPrefixSelect.dispatchEvent(new Event('change'));
+        }
+    } else if ('theme_textadventure' !== naiPrefixSelect.value) {
+        naiPrefixSelect.value = 'theme_textadventure';
+        naiPrefixSelect.dispatchEvent(new Event('change'));
+    }
+
+    const sendButton = document.getElementById('send_but');
     const actionButton = '<div id="anlatan-nai-extras-send-action" class="fa-solid fa-running" title="Make an action" data-i18n="[title]Make an action"></div>';
     sendButton.insertAdjacentHTML('beforebegin', actionButton);
     document.getElementById('anlatan-nai-extras-send-action').addEventListener('click', () => {
-        const sendTextarea =  document.getElementById('send_textarea');
+        const sendTextarea = document.getElementById('send_textarea');
         const text = sendTextarea.value;
 
         if (text === 'l') {
@@ -569,7 +586,7 @@ function setupTextAdventure() {
     const dialogueButton = '<div id="anlatan-nai-extras-send-dialogue" class="fa-solid fa-comment" title="Say something" data-i18n="[title]Say something"></div>';
     sendButton.insertAdjacentHTML('beforebegin', dialogueButton);
     document.getElementById('anlatan-nai-extras-send-dialogue').addEventListener('click', () => {
-        const sendTextarea =  document.getElementById('send_textarea');
+        const sendTextarea = document.getElementById('send_textarea');
         let text = sendTextarea.value;
 
         if (true === isLastChar(text, '?')) text = `> You ask "${text}."`;
@@ -582,7 +599,7 @@ function setupTextAdventure() {
     });
 }
 
-function isLastChar(input, character)  {
+function isLastChar(input, character) {
     if (input.length === 0) {
         return false;
     }
@@ -593,27 +610,31 @@ function isLastChar(input, character)  {
     return character === lastChar;
 }
 
+function onNaiModeChange(event) {
+    extensionSettings.mode = Number(event.target.value);
+    saveSettingsDebounced();
+
+    updateUi();
+}
+
 /**
  * Entry point for extension
  */
 (async function () {
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
-    const naiModuleSelect = document.getElementById('nai_prefix');
 
     container.insertAdjacentHTML('beforeend', naiExtrasHtml);
 
     updateUi();
     setupHelpers();
 
-    if ('theme_textadventure' === naiModuleSelect.value) setupTextAdventure();
-
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, orderInput);
     eventSource.on(event_types.GENERATE_BEFORE_COMBINE_PROMPTS, checkAdvancedFormatting);
     eventSource.on(event_types.MESSAGE_SWIPED, checkAdvancedFormatting);
     eventSource.on(event_types.CHAT_CHANGED, () => swapSettingsSource(this_chid));
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (chatId) => {
-        if ('theme_textadventure' === naiModuleSelect.value) {
+        if (adventureMode()) {
             // Every time this function is executed, a puppy dies on planet earth.
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             document.querySelector('.last_mes .mes_edit').click();
@@ -629,19 +650,18 @@ function isLastChar(input, character)  {
     const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
     const resetStoryString = document.getElementById('anlatan-nai-extras-resetStoryString');
     const addBlock = document.getElementById('anlatan-nai-extras-addBlock');
-    const removeCharAndUser = document.getElementById('anlatan-nai-extras-settings-removeCharAndUser');
     const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
     const saveToCharacter = document.getElementById('anlatan-nai-extras-saveToCharacter');
+    const naiModeSelect = document.getElementById('anlatan-nai-extras-mode');
 
     storyStringTextarea.addEventListener('change', onStoryStringChange);
     removeLastMentionOfCharToggle.addEventListener('change', onRemoveLastMentionOfCharChange);
     removeExampleChatSeparators.addEventListener('change', onRemoveExampleChatSeparatorsChange);
     resetStoryString.addEventListener('click', onResetStoryStringClick);
     addBlock.addEventListener('click', onAddBlockClick);
-    removeCharAndUser.addEventListener('click', onRemoveCharAndUserClick);
     chatPrune.addEventListener('change', onChatPruneChange);
     saveToCharacter.addEventListener('click', onSaveToCharacterClick);
-    naiModuleSelect.addEventListener('change', onNaiModuleChange);
+    naiModeSelect.addEventListener('change', onNaiModeChange);
 
     updateTextBlocks();
 })();
