@@ -1,25 +1,47 @@
 # Extra settings for NovelAI in SillyTavern
 
+NAI Extras is a small extension for SillyTavern that takes over after Advanced Formatting. It allows you to further edit the context composition, switch between chat, story and text adventure mode as well as bind specific context compositions to characters and declare re-usable textblocks. [Example Screnshot](example.png).
 
-* [Story Format Window](#story-format-window)
+* [Mode](#mode)
+* [Chat Format Window](#chat-format-window)
   * [Variables](#variables)
   * [Helpers](#helpers)
   * [Text Blocks](#text-blocks)
 * [Pruning Chat Messages](#pruning-chat-messages)
 
-## Story Format Window
+## Mode
+
+Chat
+For chat-style interactions. The default SillyTavern behavior.
+
+Story
+For writing stories where the model picks up where you left of. The default NovelAI behavior.
+
+Text Adventure
+For interaction with NovelAIs Text Adventure module enabled. This mode will perform some pre- and post-processing to make the module work with ST.
+
+## Chat Format Window
 This is similar to Advanced Formatting. Leaving the textarea empty will cause ST to use its default formatting method.
 
 A simple context might look like this:
 ```
-{{description}}
-{{persona}}
 ⁂
 {{preamble}}
+----
+{{char}}:
+{{description}}
+{{personality}}
+----
+{{user}}:
+{{persona}}
+----
+{{wiBefore}}
+{{wiAfter }}
+{{#if examples}}{{examples}}{{else}}***{{/if}}
 {{chat}}
 ```
 
-Placing `⁂` within the context tells the model that the story will begin at this point.
+Placing `⁂` within the context tells the model that the story will begin at this point. More information is available here: [NovelAI documentation](https://docs.novelai.net/text/specialsymbols.html)
 
 ### Variables
 
