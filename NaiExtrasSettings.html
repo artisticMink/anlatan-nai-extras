@@ -1,90 +1,133 @@
-<div class="inline-drawer m-t-1 wide100p">
-    <div class="inline-drawer-toggle inline-drawer-header">
-        <div style="margin: 0 auto;">
-            <span>NovelAI Extras</span>
-            <a href="https://github.com/artisticMink/anlatan-nai-extras/blob/main/README.md" target="_blank"
-               title="NAI Extras Documentation.">
-                <span class="note-link-span fa-solid fa-circle-question"></span>
-            </a>
-        </div>
-        <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+<hr class="m-t-1 m-b-1">
+<div class="textAlignCenter">
+    <h3 style="display: inline-block;">NovelAI Extras</h3>
+    <a href="https://github.com/artisticMink/anlatan-nai-extras/blob/main/README.md" target="_blank"
+       title="NAI Extras Documentation.">
+        <span class="note-link-span fa-solid fa-circle-question"></span>
+    </a>
+</div>
+<div id="anlatan-nai-extras-warning"></div>
+
+<div id="anlatan-nai-extras-storystring" class="range-block m-t-1">
+    <span>Chat Format</span>
+    <div id="anlatan-nai-extras-characterStatus"><span>Current Settings: </span><span
+            id="anlatan-nai-extras-characterSelected">Default</span></div>
+
+    <div class="wide100p">
+        <textarea id="anlatan-nai-extras-storystring-template" class="text_pole" rows="12"
+                  spellcheck="false"></textarea>
     </div>
-    <div class="inline-drawer-content">
-        <div id="anlatan-nai-extras-warning"></div>
-        <div class="range-block m-t-1">
-            <label class="checkbox_label widthFreeExpand">
-                <input id="anlatan-nai-extras-settings-removeLastMentionOfUser" type="checkbox">
-                <span data-i18n="Streaming">Remove chat-style nudge.</span>
-            </label>
-            <div class="toggle-description justifyLeft">
+</div>
+<div class="range-block justifyContentFlexStart">
+    <div>
+        <span style="margin-right: 3px;" class="toggle-description">Chat Prune: </span><input
+            id="anlatan-nai-extras-chatPrune" class="text_pole textarea_compact" type="text" placeholder="0"/>
+    </div>
+    <div id="anlatan-nai-extras-saveToCharacter" class="menu_button menu_button_icon">
+        <i class="fa-xs fa-solid fa-save"></i>
+        <small data-i18n="Save">Save</small>
+    </div>
+    <div id="anlatan-nai-extras-resetStoryString" class="menu_button menu_button_icon">
+        <i class="fa-xs fa-solid fa-undo"></i>
+        <small data-i18n="Reset">Reset</small>
+    </div>
+</div>
+<div id="anlatan-nai-extras-settings">
+    <div class="inline-drawer m-t-1 wide100p">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <div>
+                <span>Mode</span>
+            </div>
+            <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="range-block m-t-1">
+                <select id="anlatan-nai-extras-mode">
+                    <option value="1">Chat (ST Default)</option>
+                    <option value="2">Story</option>
+                    <option value="3">Text Adventure</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="inline-drawer m-t-1 wide100p">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <div>
+                <span>Settings</span>
+            </div>
+            <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="range-block m-t-1">
+                <label class="checkbox_label widthFreeExpand">
+                    <input id="anlatan-nai-extras-settings-removeLastMentionOfUser" type="checkbox">
+                    <span data-i18n="Streaming">Remove chat-style nudge.</span>
+                </label>
+                <div class="toggle-description justifyLeft">
             <span data-i18n="Removes 'character:' from the end of the prompt when enabled. Useful when placed manually">
-            Removes 'character:' from the end of the prompt when enabled. Useful when placed manually.</span>
+            Removes 'character:' from the end of the prompt when enabled. Useful when placed manually. For example after a set of static instructions.</span>
+                </div>
             </div>
-        </div>
-        <div class="range-block m-t-1">
-            <label class="checkbox_label widthFreeExpand">
-                <input id="anlatan-nai-extras-settings-removeCharAndUser" type="checkbox">
-                <span data-i18n="Remove chat-style formatting from the chat.">Remove all chat-style formatting from the chat.</span>
-            </label>
-            <div class="toggle-description justifyLeft">
-            <span data-i18n="Removes all occurrences of 'character:' and 'user:' from the chat while enabled. The default NAI experience.">
-            Removes all occurrences of 'character:' and 'user:' from the chat while enabled. The default NAI experience.</span>
-            </div>
-        </div>
-        <div class="range-block m-t-1">
-            <label class="checkbox_label widthFreeExpand">
-                <input id="anlatan-nai-extras-settings-removeExampleChatSeparators" type="checkbox">
-                <span data-i18n="Streaming">Squash example chats</span>
-            </label>
-            <div class="toggle-description justifyLeft">
+            <div class="range-block m-t-1">
+                <label class="checkbox_label widthFreeExpand">
+                    <input id="anlatan-nai-extras-settings-removeExampleChatSeparators" type="checkbox">
+                    <span data-i18n="Streaming">Squash example chats</span>
+                </label>
+                <div class="toggle-description justifyLeft">
             <span data-i18n="Reduces all sample messages to a single conversation.">
-            Reduces all sample messages to a single conversation.</span>
+                By default, ST adds a 'new scene' symbol (***) between example chats. Enabling this reduces all sample messages to a single conversation.</span>
+                </div>
             </div>
         </div>
-        <div id="anlatan-nai-extras-storystring" class="range-block m-t-1">
-            <div class="range-block-title">
-                <span>Story Format</span>
+    </div>
+
+    <div class="inline-drawer m-t-1 wide100p">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <div>
+                <span>Blocks</span>
             </div>
-            <div class="toggle-description widthUnset">
-                <div id="anlatan-nai-extras-characterStatus"><span>Current Settings: </span><span id="anlatan-nai-extras-characterSelected">Default</span></div>
-            </div>
-            <div class="wide100p">
-                <textarea id="anlatan-nai-extras-storystring-template" class="text_pole" rows="12" spellcheck="false"></textarea>
-            </div>
+            <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
         </div>
-        <div id="anlatan-nai-extras-settings">
-            <div class="range-block justifyContentFlexStart">
-                <div>
-                    <span style="margin-right: 3px;" class="toggle-description">Chat Prune: </span><input id="anlatan-nai-extras-chatPrune" class="text_pole textarea_compact" type="text" placeholder="0" />
-                </div>
-                <div id="anlatan-nai-extras-saveToCharacter" class="menu_button menu_button_icon">
-                    <i class="fa-xs fa-solid fa-save"></i>
-                    <small data-i18n="Save">Save</small>
-                </div>
-                <div id="anlatan-nai-extras-resetStoryString" class="menu_button menu_button_icon">
-                    <i class="fa-xs fa-solid fa-undo"></i>
-                    <small data-i18n="Reset">Reset</small>
-                </div>
-            </div>
+        <div class="inline-drawer-content">
             <div class="range-block">
                 <div class="range-block-title">
                     <span>Text Blocks</span>
                 </div>
                 <div class="toggle-description widthUnset" data-i18n="Create text blocks to use in Story Format.">
-                    Create text blocks to use as variables in Story Format.
+                    Create text blocks to use as variables in Chat Format.
                 </div>
                 <div class="flex wide100p">
-                    <input id="anlatan-nai-extras-newblock-label" type="text" class="text_pole textarea_compact" placeholder="Block name"/>
+                    <input id="anlatan-nai-extras-newblock-label" type="text" class="text_pole textarea_compact"
+                           placeholder="Block name"/>
                     <div id="anlatan-nai-extras-addBlock" class="menu_button menu_button_icon" style="margin-left:1em;">
                         <i class="fa-xs fa-solid fa-plus"></i>
                         <small data-i18n="Add block">Add</small>
                     </div>
                 </div>
-                <textarea id="anlatan-nai-extras-newblock-content" class="text_pole textarea_compact" placeholder="Block content"></textarea>
+                <textarea id="anlatan-nai-extras-newblock-content" class="text_pole textarea_compact"
+                          placeholder="Block content"></textarea>
             </div>
             <div id="anlatan-nai-extras-textblocks" class="range-block">
 
             </div>
+        </div>
+    </div>
+
+    <div class="inline-drawer m-t-1 wide100p">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <div>
+                <span>Documentation</span>
+            </div>
+            <div class="fa-solid fa-circle-chevron-down inline-drawer-icon down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <ul>
+                <li><a target="_blank" href="https://docs.sillytavern.app/usage/api-connections/novelai/#tips-and-faqs-for-using-novelai-with-sillytavern">SillyTavern (NovelAI))</a></li>
+                <li><a target="_blank" href="https://docs.novelai.net/text.html">NovelAI (Official)</a></li>
+                <li><a target="_blank" href="https://tapwavezodiac.github.io/novelaiUKB/">NovelAI (Unofficial))</a></li>
+                <li><a target="_blank" href="https://github.com/artisticMink/anlatan-nai-extras/blob/main/README.md">NAI Extras</a></li>
+            </ul>
         </div>
     </div>
 </div>

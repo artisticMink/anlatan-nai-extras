@@ -14,12 +14,19 @@
 }
 
 #anlatan-nai-extras-characterStatus {
-
+    color: var(--SmartThemeEmColor);
+    font-size: small;
 }
 
 #anlatan-nai-extras-saveToCharacter {
     margin-left: auto;
     margin-right: 1em;
+}
+
+#anlatan-nai-extras-saveToCharacter,
+#anlatan-nai-extras-resetStoryString {
+    font-size: larger;
+    padding: 5px;
 }
 
 .mes_text blockquote {
