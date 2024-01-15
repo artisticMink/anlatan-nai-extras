@@ -37,8 +37,8 @@ const defaultSettings = {
 {{persona}}
 ----
 {{wiBefore}}
-{{wiAfter }}
-{{#if examples}} {{examples}} {{else}} *** {{/if}}
+{{wiAfter}}
+{{#if examples}}{{examples}}{{else}}***{{/if}}
 {{chat}}`,
 };
 
