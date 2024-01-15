@@ -37,8 +37,8 @@ const defaultSettings = {
 {{persona}}
 ----
 {{wiBefore}}
-{{wiAfter}}
-{{#if examples}}{{examples}}{{else}}***{{/if}}
+{{wiAfter }}
+{{#if examples}} {{examples}} {{else}} *** {{/if}}
 {{chat}}`,
 };
 
@@ -190,7 +190,19 @@ function updateUi() {
     chatPrune.value = extensionSettings.pruneChatBy;
     naiModeSelect.value = extensionSettings.mode ?? NaiMode.CHAT;
 
-    setupTextAdventure();
+    document.getElementById('anlatan-nai-extras-send-action')?.remove();
+    document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
+
+    if (adventureMode()) {
+        setupTextAdventure();
+    } else {
+        const naiPrefixSelect = document.getElementById('nai_prefix');
+        if ('theme_textadventure' === naiPrefixSelect.value) {
+            naiPrefixSelect.value = 'vanilla';
+            naiPrefixSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
     updateTextBlocks();
 }
 
@@ -547,19 +559,11 @@ function adventureMode() {
 }
 
 function setupTextAdventure() {
-    document.getElementById('anlatan-nai-extras-send-action')?.remove();
-    document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
 
     const naiPrefixSelect = document.getElementById('nai_prefix');
-    if (false === adventureMode()) {
-        if ('theme_textadventure' === naiPrefixSelect.value) {
-            naiPrefixSelect.value = 'vanilla';
-            naiPrefixSelect.dispatchEvent(new Event('change'));
-        }
-    } else if ('theme_textadventure' !== naiPrefixSelect.value) {
-        naiPrefixSelect.value = 'theme_textadventure';
-        naiPrefixSelect.dispatchEvent(new Event('change'));
-    }
+
+    naiPrefixSelect.value = 'theme_textadventure';
+    naiPrefixSelect.dispatchEvent(new Event('change'));
 
     const sendButton = document.getElementById('send_but');
     const actionButton = '<div id="anlatan-nai-extras-send-action" class="fa-solid fa-running" title="Make an action" data-i18n="[title]Make an action"></div>';
@@ -618,7 +622,7 @@ function onNaiModeChange(event) {
     updateUi();
 }
 
-function init() {
+async function init() {
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
 
@@ -672,9 +676,12 @@ let naiExtrasInitialized = false;
  * Entry point for extension
  */
 (async function () {
-    console.log('Foo')
-    if (isNai()) init();
-    else eventSource.on(event_types.CHATCOMPLETION_SOURCE_CHANGED, () => {
+    if (isNai()) await init();
+    document.getElementById('main_api').addEventListener('change', (event) => {
         if (isNai() && !naiExtrasInitialized) init();
-    })
+        if (!isNai() && naiExtrasInitialized) {
+            document.getElementById('anlatan-nai-extras-send-action')?.remove();
+            document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
+        }
+    });
 })();
