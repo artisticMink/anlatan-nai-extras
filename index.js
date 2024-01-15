@@ -606,21 +606,19 @@ function isLastChar(input, character) {
 
     const lastChar = input.slice(-1);
 
-    // Compare the last character with the target character
     return character === lastChar;
 }
 
 function onNaiModeChange(event) {
+    if (!isNai) return;
+
     extensionSettings.mode = Number(event.target.value);
     saveSettingsDebounced();
 
     updateUi();
 }
 
-/**
- * Entry point for extension
- */
-(async function () {
+function init() {
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
 
@@ -638,9 +636,9 @@ function onNaiModeChange(event) {
             // Every time this function is executed, a puppy dies on planet earth.
             const sleep = ms => new Promise(r => setTimeout(r, ms));
             document.querySelector('.last_mes .mes_edit').click();
-            sleep(30);
+            sleep(50);
             document.getElementById('curEditTextarea').value = document.getElementById('curEditTextarea').value.replace('\n>', '');
-            sleep(30);
+            sleep(50);
             document.querySelector('.last_mes .mes_edit_done').click();
         }
     });
@@ -664,4 +662,19 @@ function onNaiModeChange(event) {
     naiModeSelect.addEventListener('change', onNaiModeChange);
 
     updateTextBlocks();
+
+    naiExtrasInitialized = true;
+}
+
+let naiExtrasInitialized = false;
+
+/**
+ * Entry point for extension
+ */
+(async function () {
+    console.log('Foo')
+    if (isNai()) init();
+    else eventSource.on(event_types.CHATCOMPLETION_SOURCE_CHANGED, () => {
+        if (isNai() && !naiExtrasInitialized) init();
+    })
 })();
