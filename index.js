@@ -31,7 +31,7 @@ const defaultSettings = {
     textBlocks: [],
     characters: {},
     storyString: `⁂
-{{preamble}}
+{{style "chat" "sfw" "narrative" "detailed" "slice of life"}}
 ----
 {{char}}:
 {{description}}
@@ -42,7 +42,7 @@ const defaultSettings = {
 ----
 {{wiBefore}}
 {{wiAfter }}
-{{#if examples}} {{examples}} {{else}} *** {{/if}}
+{{#if examples}}{{examples}}{{else}}***{{/if}}
 {{chat}}`,
 };
 
