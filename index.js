@@ -1,20 +1,24 @@
-import { extension_settings } from '../../../extensions.js';
+import { extension_settings, getContext } from '../../../extensions.js';
 import {
     callPopup,
     characters,
     event_types,
     eventSource,
     main_api,
+    reloadCurrentChat,
     saveSettingsDebounced, sendTextareaMessage, substituteParams,
     this_chid,
 } from '../../../../script.js';
 import { uuidv4 } from '../../../utils.js';
+import { getMessageTimeStamp } from '../../../RossAscends-mods.js';
 
 class NaiMode {
     static CHAT = 1;
     static STORY = 2;
     static ADVENTURE = 3;
 }
+
+const appContext = getContext();
 
 const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
@@ -27,7 +31,7 @@ const defaultSettings = {
     textBlocks: [],
     characters: {},
     storyString: `⁂
-{{preamble}}
+{{style "chat" "sfw" "narrative" "detailed" "slice of life"}}
 ----
 {{char}}:
 {{description}}
@@ -38,7 +42,7 @@ const defaultSettings = {
 ----
 {{wiBefore}}
 {{wiAfter }}
-{{#if examples}} {{examples}} {{else}} *** {{/if}}
+{{#if examples}}{{examples}}{{else}}***{{/if}}
 {{chat}}`,
 };
 
@@ -183,6 +187,8 @@ function updateUi() {
     const removeExampleChatSeparators = document.getElementById('anlatan-nai-extras-settings-removeExampleChatSeparators');
     const chatPrune = document.getElementById('anlatan-nai-extras-chatPrune');
     const naiModeSelect = document.getElementById('anlatan-nai-extras-mode');
+    const optionsMenu = document.getElementById('options');
+    const options = optionsMenu.querySelector('.options-content');
 
     storyStringTextarea.value = extensionSettings.storyString;
     removeLastMentionOfCharToggle.checked = extensionSettings.removeLastMentionOfChar;
@@ -192,6 +198,7 @@ function updateUi() {
 
     document.getElementById('anlatan-nai-extras-send-action')?.remove();
     document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
+    document.getElementById('option_naiextras_adddinkus')?.remove();
 
     if (adventureMode()) {
         setupTextAdventure();
@@ -202,6 +209,27 @@ function updateUi() {
             naiPrefixSelect.dispatchEvent(new Event('change'));
         }
     }
+
+    options.insertAdjacentHTML('beforeend', `
+        <a id="option_naiextras_adddinkus">NAI - New Scene</a>
+    `);
+
+    document.getElementById('option_naiextras_adddinkus').addEventListener('click',async event => {
+        appContext.chat.push({
+            name: 'naiextras',
+            is_user: false,
+            is_system: false,
+            send_date: getMessageTimeStamp(),
+            mes: '***',
+            extra: {},
+            force_avatar: 'User Avatars/user-default.png',
+        });
+
+        await appContext.saveChat();
+        await reloadCurrentChat();
+
+        console.log(appContext);
+    });
 
     updateTextBlocks();
 }
@@ -238,8 +266,12 @@ function updateTextBlocks() {
  * @param chat
  * @returns {*}
  */
-const removeFromChat = (user, character, chat) => {
-    const expression = new RegExp(`^${user}: ?|${character}: ?`, 'gm');
+const removeFromChat = (user, character, chat = null) => {
+    let expression = new RegExp(`^${user}: ?`, 'gm');
+
+    if (chat) expression = new RegExp(`^${user}: ?|${character}: ?`, 'gm');
+
+
     return chat.replace(expression, '');
 };
 
@@ -512,6 +544,8 @@ function orderInput(data) {
     } else {
         if (extensionSettings.removeLastMentionOfChar) chat = removeLastOccurrence(chat, `${data.char}:`);
     }
+
+    chat = removeFromChat('naiextras', null, chat);
 
     let examples = data.mesExmString;
     if (extensionSettings.removeExampleChatSeparators) examples = examples.replaceAll('***', '');
