@@ -46,6 +46,8 @@ const defaultSettings = {
 {{chat}}`,
 };
 
+const naiIcon = '<svg width="16" height="19" viewBox="0 0 118 143" fill="none" xmlns="http://www.w3.org/2000/svg"> <path fill-rule="evenodd" clip-rule="evenodd" d="M19.8521 111.571C14.9909 103.761 9.08889 97.2271 2.14617 92.6282C-0.129986 91.1205 -0.706675 87.8117 0.95396 85.6446C13.8489 68.8166 33.5273 26.658 44.3824 2.38697C46.1611 -1.58993 52.2575 -0.299101 52.2575 4.05743V66.4942C46.5492 69.0238 42.5672 74.7394 42.5672 81.385C42.5672 83.5935 43.0069 85.6993 43.8037 87.6196L19.8521 111.571ZM25.715 122.679C28.0868 127.99 30.0808 133.658 31.697 139.54C32.1833 141.31 33.7773 142.562 35.6127 142.562H58.8468H82.0808C83.9163 142.562 85.5102 141.31 85.9966 139.54C87.6127 133.658 89.6067 127.99 91.9784 122.679L79.7125 110.413L69.4523 120.674C69.6143 121.419 69.6996 122.194 69.6996 122.988C69.6996 128.982 64.8405 133.841 58.8466 133.841C52.8527 133.841 47.9937 128.982 47.9937 122.988C47.9937 116.994 52.8527 112.135 58.8466 112.135C59.5269 112.135 60.1925 112.198 60.838 112.317L71.2272 101.928L65.5319 96.2328C63.4923 97.1526 61.2292 97.6645 58.8466 97.6645C56.4639 97.6645 54.2007 97.1526 52.1611 96.2327L25.715 122.679ZM97.8412 111.571C102.702 103.761 108.605 97.2272 115.547 92.6282C117.824 91.1205 118.4 87.8117 116.74 85.6446C103.845 68.8166 84.1663 26.658 73.3111 2.38697C71.5325 -1.58993 65.4361 -0.299101 65.4361 4.05743V66.4944C71.1441 69.0241 75.126 74.7396 75.126 81.385C75.126 83.5936 74.6862 85.6994 73.8894 87.6198L83.9552 97.6855L97.8412 111.571Z" fill="white"/></svg>';
+
 loadSettings();
 let extensionSettings = extension_settings[extensionName];
 
@@ -136,14 +138,9 @@ function onChatPruneChange(event) {
 function onSaveToCharacterClick() {
     if (!this_chid) return;
 
-    const popupMessage = `
-<br>
-<p>
-<b>Bind the current settings to the selected character?</b>
-</p>
-<p>
-Your settings are copied to this character and loaded whenever this character is selected. If you change the character name, your settings will be lost.
-</p>`;
+    const popupMessage = `<br><p><b>Bind the current settings to the selected character?</b></p>
+        <p>Your settings are copied to this character and loaded whenever this character is selected. If you change the character name, your settings will be lost.</p>`;
+
     callPopup(popupMessage, 'confirm').then(accept => {
         if (true !== accept) return;
 
@@ -153,10 +150,18 @@ Your settings are copied to this character and loaded whenever this character is
     });
 }
 
+/**
+ * Copy settings to character settings.
+ *
+ * @param {string} characterId - The ID of the character.
+ * @return {void}
+ */
 function copySettingsToCharacterSettings(characterId) {
     const name = characters[characterId].data.name;
     const characterSettings = structuredClone(extensionSettings);
+
     delete characterSettings.characters;
+
     extension_settings[extensionName].characters[name] = characterSettings;
 }
 
@@ -181,6 +186,11 @@ function swapToDefaultSettings() {
     document.getElementById('anlatan-nai-extras-characterSelected').textContent = 'Default';
 }
 
+/**
+ * Updates the UI elements based on the extension settings and current mode.
+ *
+ * @return {void}
+ */
 function updateUi() {
     const storyStringTextarea = document.getElementById('anlatan-nai-extras-storystring-template');
     const removeLastMentionOfCharToggle = document.getElementById('anlatan-nai-extras-settings-removeLastMentionOfUser');
@@ -198,6 +208,7 @@ function updateUi() {
 
     document.getElementById('anlatan-nai-extras-send-action')?.remove();
     document.getElementById('anlatan-nai-extras-send-dialogue')?.remove();
+    document.getElementById('option_naiextras_adddbracket')?.remove();
     document.getElementById('option_naiextras_adddinkus')?.remove();
 
     if (adventureMode()) {
@@ -211,28 +222,30 @@ function updateUi() {
     }
 
     options.insertAdjacentHTML('beforeend', `
-        <a id="option_naiextras_adddinkus">NAI - New Scene</a>
+        <a id="option_naiextras_adddbracket">${naiIcon} Narrate</a>
+        <a id="option_naiextras_adddinkus">${naiIcon} Start a new scene</a>
     `);
 
-    document.getElementById('option_naiextras_adddinkus').addEventListener('click',async event => {
-        appContext.chat.push({
-            name: 'naiextras',
-            is_user: false,
-            is_system: false,
-            send_date: getMessageTimeStamp(),
-            mes: '***',
-            extra: {},
-            force_avatar: 'User Avatars/user-default.png',
-        });
-
-        await appContext.saveChat();
-        await reloadCurrentChat();
-
-        console.log(appContext);
-    });
+    document.getElementById('option_naiextras_adddbracket').addEventListener('click',async event => addNaiMessage('[ Edit Me ]]'));
+    document.getElementById('option_naiextras_adddinkus').addEventListener('click',async event => addNaiMessage('***'));
 
     updateTextBlocks();
 }
+
+async function addNaiMessage(message) {
+    appContext.chat.push({
+        name: 'naiextras',
+        is_user: false,
+        is_system: false,
+        send_date: getMessageTimeStamp(),
+        mes: message,
+        extra: {},
+        force_avatar: 'User Avatars/user-default.png',
+    });
+
+    await appContext.saveChat();
+    await reloadCurrentChat();
+};
 
 /**
  * Empties and fills the text block container.
