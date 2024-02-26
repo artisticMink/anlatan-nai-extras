@@ -540,8 +540,37 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('c', concatHelper);
 }
 
+/**
+ * Orders the input data to generate a combined prompt.
+ *
+ * @param {Object} data - The input data object.
+ * @param {boolean} data.isNai - Flag indicating if it is Nai or not.
+ * @param {Array<Object>} data.finalMesSend - Array of chat messages and prompts.
+ * @param {number} [data.pruneChatBy] - Number of chat messages to remove.
+ * @param {string} data.extensionSettings.storyString - Story string template.
+ * @param {string} data.extensionSettings.removeExampleChatSeparators - Flag indicating if example chat separators should be removed.
+ * @param {string} data.extensionSettings.removeLastMentionOfChar - Flag indicating if last mention of character should be removed.
+ * @param {Array<Object>} data.mesExmString - Array of example messages.
+ * @param {string} data.description - Description marker.
+ * @param {string} data.personality - Personality marker.
+ * @param {string} data.persona - Persona marker.
+ * @param {string} data.worldInfoBefore - World info before marker.
+ * @param {string} data.worldInfoAfter - World info after marker.
+ * @param {string} data.beforeScenarioAnchor - Scenario before marker.
+ * @param {string} data.afterScenarioAnchor - Scenario after marker.
+ * @param {string} data.scenario - Scenario marker.
+ * @param {string} data.naiPreamble - Nai preamble marker.
+ * @param {string} data.main - Main marker.
+ * @param {string} data.jailbreak - Jailbreak marker.
+ * @param {string} data.user - User marker.
+ * @param {string} data.char - Character marker.
+ * @param {string} data.generatedPromptCache - Generated prompt cache marker.
+ * @param {Array<Object>} data.extensionSettings.textBlocks - Array of text blocks.
+ * @param {string} data.extensionSettings.textBlocks.label - Label of the text block.
+ * @param {string} data.extensionSettings.textBlocks.content - Content of the text block.
+ */
 function orderInput(data) {
-    if (!isNai) return;
+    if (!isNai()) return;
 
     const storyStringTemplate = extensionsHandlebars.compile(`${extensionSettings.storyString} {{generatedPromptCache}}`, { noEscape: true });
     const chatData = structuredClone(data.finalMesSend);
