@@ -1,17 +1,27 @@
 # Extra settings for NovelAI in SillyTavern
 
-NovelAI's Clio and Kayra models benefit greatly from a context that is tailored to a specific story. NAI Extras attempts to give users more options when composing the context. Making it possible to further edit the context composition, switch between chat and NAI's vanilla story mode, as well as bind certain context compositions to characters without the need for advanced formatting presets. [Example Screnshot](example.png).
+NovelAI's Clio and Kayra models benefit from a context that is tailored to a specific story. With this extension, the composition of the context is placed in a location below the model parameters and allows for a more precise composition as well as binding a composition to a character.
 
-Other features include improved support for NAI text adventure mode, character-specific, reusable text blocks for use in context and the ability to insert scene breaks in chat mode. 
+Other features include a second 'Story' mode that's similar to NovelAIs vanilla experience, improved support for text adventure mode, character-specific reusable text blocks and the ability to insert narration into the chat. [Example Screenshot](example.png).
 
+## Contents
+
+* [Installation](#the-default-template)
 * [The Default Template](#the-default-template)
 * [Mode](#mode)
+    * [Chat](#chat)
+      * [Narration](#chat-narration)
+    * [Story](#story)
+    * [Text Adventure](#text-adventure)
 * [Chat Format Window](#chat-format-window)
   * [Variables](#variables)
   * [Helpers](#helpers)
   * [Text Blocks](#text-blocks)
-* [Scene Breaks](#scene-breaks)
 * [Pruning Chat Messages](#pruning-chat-messages)
+
+## Installation
+
+Via the SillyTavern Extension installer. Open your SillyTavern installation. Select the 'Extensions' Tab and click on 'Install Extension', now paste the repository URL into the input field and click save.
 
 ## The Default Template
 
@@ -54,13 +64,23 @@ The chat history
 
 ## Mode
 
-Chat
+### Chat
 For chat-style interactions. The default SillyTavern behavior.
 
-Story
+#### Chat Narration
+
+Open the menu on the left side of the chat input and click on 'Add Narration'. This will insert an empty message, not attributed to any user, into the chat, which can then be edited. This works great for scene breaks, narration and additional context. 
+
+Example:
+````
+***
+[ Later that same night, high on the wall of the castle overlooking the village ]
+````
+
+### Story
 For writing stories in which the model acts as co-author. The default NovelAI behavior.
 
-Text Adventure
+### Text Adventure
 Improved the function of NovelAI's Text Adventure module. Adds UI elements for dialog and actions and performs pre- and post-processing to make the module work with ST. 
 
 ## Chat Format Window
@@ -261,17 +281,7 @@ These are some short storys related to the plot:
 {Write in the style of a light novel}
 ```
 
-### Pruning Chat Messages
-
-Non-ST variables are not taken into account in the token limit of the models. Normally, you have a margin of about 200 tokens, even with a full chat history, which is sufficient for simple instructions or information. However, when adding large amounts of text or extended symbols, NAI might not generate an answer because the context exceeds the token count of the model. To prevent this, you can remove some messages from the chat history. For example, if you enter the value 3, the 3 oldest chat messages will be removed, freeing up some tokens for your instructions or text blocks.
-
-## Scene Breaks
-
-Navigate to the options menu on the left side of the chat input and select `NAI - New Scene` to insert a scene break into the chat history.
-
-A dinkus `***` helps the model to understand that a scene break takes place. In chat mode, placing a dinkus in the chat message will not work as it creates a message like this: `Username: *** sometext`. Using the new scene button will insert a separate message which only contains the dinkus in a single new line, enabling the model to recognize it.
-
-## Text Blocks
+### Text Blocks
 Define variables for use within the context.
 
 Example:
@@ -287,3 +297,6 @@ Block Content: Incorporate the following plot point into the story: Suddenly, a 
 {{chat}}
 {{instruct Geesepocalypse}}
 ```
+
+### Pruning Chat Messages
+Non-ST variables are not taken into account in the token limit of the models. Normally, you have a margin of about 200 tokens, even with a full chat history, which is sufficient for simple instructions or information. However, when adding large amounts of text or extended symbols, NAI might not generate an answer because the context exceeds the token count of the model. To prevent this, you can remove some messages from the chat history. For example, if you enter the value 3, the 3 oldest chat messages will be removed, freeing up some tokens for your instructions or text blocks.
