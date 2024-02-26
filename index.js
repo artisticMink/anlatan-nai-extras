@@ -18,11 +18,17 @@ class NaiMode {
     static ADVENTURE = 3;
 }
 
+class Icons {
+    static NAI = '<svg width="16" height="19" viewBox="0 0 118 143" fill="none" xmlns="http://www.w3.org/2000/svg"> <path fill-rule="evenodd" clip-rule="evenodd" d="M19.8521 111.571C14.9909 103.761 9.08889 97.2271 2.14617 92.6282C-0.129986 91.1205 -0.706675 87.8117 0.95396 85.6446C13.8489 68.8166 33.5273 26.658 44.3824 2.38697C46.1611 -1.58993 52.2575 -0.299101 52.2575 4.05743V66.4942C46.5492 69.0238 42.5672 74.7394 42.5672 81.385C42.5672 83.5935 43.0069 85.6993 43.8037 87.6196L19.8521 111.571ZM25.715 122.679C28.0868 127.99 30.0808 133.658 31.697 139.54C32.1833 141.31 33.7773 142.562 35.6127 142.562H58.8468H82.0808C83.9163 142.562 85.5102 141.31 85.9966 139.54C87.6127 133.658 89.6067 127.99 91.9784 122.679L79.7125 110.413L69.4523 120.674C69.6143 121.419 69.6996 122.194 69.6996 122.988C69.6996 128.982 64.8405 133.841 58.8466 133.841C52.8527 133.841 47.9937 128.982 47.9937 122.988C47.9937 116.994 52.8527 112.135 58.8466 112.135C59.5269 112.135 60.1925 112.198 60.838 112.317L71.2272 101.928L65.5319 96.2328C63.4923 97.1526 61.2292 97.6645 58.8466 97.6645C56.4639 97.6645 54.2007 97.1526 52.1611 96.2327L25.715 122.679ZM97.8412 111.571C102.702 103.761 108.605 97.2272 115.547 92.6282C117.824 91.1205 118.4 87.8117 116.74 85.6446C103.845 68.8166 84.1663 26.658 73.3111 2.38697C71.5325 -1.58993 65.4361 -0.299101 65.4361 4.05743V66.4944C71.1441 69.0241 75.126 74.7396 75.126 81.385C75.126 83.5936 74.6862 85.6994 73.8894 87.6198L83.9552 97.6855L97.8412 111.571Z" fill="white"/></svg>';
+
+}
+
 const appContext = getContext();
 
 const extensionsHandlebars = Handlebars.create();
 const extensionName = 'anlatan-nai-extras';
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+
 const defaultSettings = {
     removeLastMentionOfChar: false,
     removeExampleChatSeparators: false,
@@ -45,8 +51,6 @@ const defaultSettings = {
 {{#if examples}}{{examples}}{{else}}***{{/if}}
 {{chat}}`,
 };
-
-const naiIcon = '<svg width="16" height="19" viewBox="0 0 118 143" fill="none" xmlns="http://www.w3.org/2000/svg"> <path fill-rule="evenodd" clip-rule="evenodd" d="M19.8521 111.571C14.9909 103.761 9.08889 97.2271 2.14617 92.6282C-0.129986 91.1205 -0.706675 87.8117 0.95396 85.6446C13.8489 68.8166 33.5273 26.658 44.3824 2.38697C46.1611 -1.58993 52.2575 -0.299101 52.2575 4.05743V66.4942C46.5492 69.0238 42.5672 74.7394 42.5672 81.385C42.5672 83.5935 43.0069 85.6993 43.8037 87.6196L19.8521 111.571ZM25.715 122.679C28.0868 127.99 30.0808 133.658 31.697 139.54C32.1833 141.31 33.7773 142.562 35.6127 142.562H58.8468H82.0808C83.9163 142.562 85.5102 141.31 85.9966 139.54C87.6127 133.658 89.6067 127.99 91.9784 122.679L79.7125 110.413L69.4523 120.674C69.6143 121.419 69.6996 122.194 69.6996 122.988C69.6996 128.982 64.8405 133.841 58.8466 133.841C52.8527 133.841 47.9937 128.982 47.9937 122.988C47.9937 116.994 52.8527 112.135 58.8466 112.135C59.5269 112.135 60.1925 112.198 60.838 112.317L71.2272 101.928L65.5319 96.2328C63.4923 97.1526 61.2292 97.6645 58.8466 97.6645C56.4639 97.6645 54.2007 97.1526 52.1611 96.2327L25.715 122.679ZM97.8412 111.571C102.702 103.761 108.605 97.2272 115.547 92.6282C117.824 91.1205 118.4 87.8117 116.74 85.6446C103.845 68.8166 84.1663 26.658 73.3111 2.38697C71.5325 -1.58993 65.4361 -0.299101 65.4361 4.05743V66.4944C71.1441 69.0241 75.126 74.7396 75.126 81.385C75.126 83.5936 74.6862 85.6994 73.8894 87.6198L83.9552 97.6855L97.8412 111.571Z" fill="white"/></svg>';
 
 loadSettings();
 let extensionSettings = extension_settings[extensionName];
@@ -135,6 +139,17 @@ function onChatPruneChange(event) {
     saveSettingsDebounced();
 }
 
+
+/**
+ * Saves the current settings to the selected character.
+ *
+ * This method displays a confirmation popup to confirm if the user wants to bind
+ * the current settings to the selected character. The settings are copied to the
+ * character settings, then the settings source is swapped to the selected character
+ * and the settings are saved.
+ *
+ * @return {void}
+ */
 function onSaveToCharacterClick() {
     if (!this_chid) return;
 
@@ -165,6 +180,14 @@ function copySettingsToCharacterSettings(characterId) {
     extension_settings[extensionName].characters[name] = characterSettings;
 }
 
+/**
+ * Swaps the settings configuration object.
+ *
+ * If a character ID is provided, the settings are swapped to the settings specific to that character.
+ * If no character ID is provided, the settings are swapped to the default settings.
+ *
+ * @param {string} [characterId] - The ID of the character to swap the settings to.
+ */
 function swapSettingsSource(characterId = null) {
     if (!isNai) return;
 
@@ -181,6 +204,11 @@ function swapSettingsSource(characterId = null) {
     updateUi();
 }
 
+/**
+ * Swaps to the default settings object.
+ *
+ * @returns {void}
+ */
 function swapToDefaultSettings() {
     extensionSettings = extension_settings[extensionName];
     document.getElementById('anlatan-nai-extras-characterSelected').textContent = 'Default';
@@ -222,16 +250,21 @@ function updateUi() {
     }
 
     options.insertAdjacentHTML('beforeend', `
-        <a id="option_naiextras_adddbracket">${naiIcon} Narrate</a>
-        <a id="option_naiextras_adddinkus">${naiIcon} Start a new scene</a>
+        <a id="option_naiextras_adddbracket">${Icons.NAI} Add Narration</a>
     `);
 
-    document.getElementById('option_naiextras_adddbracket').addEventListener('click',async event => addNaiMessage('[ Edit Me ]]'));
-    document.getElementById('option_naiextras_adddinkus').addEventListener('click',async event => addNaiMessage('***'));
+    document.getElementById('option_naiextras_adddbracket').addEventListener('click', async event => await addNaiMessage('[ Edit Me ]'));
 
     updateTextBlocks();
 }
 
+/**
+ * Adds a massage to the chat belonging to the naiextras fake user.
+ *
+ * @param {string} message - The message to be added to the chat.
+ *
+ * @return {Promise<void>} - A promise that resolves once the chat has been saved and reloaded.
+ */
 async function addNaiMessage(message) {
     appContext.chat.push({
         name: 'naiextras',
@@ -244,11 +277,15 @@ async function addNaiMessage(message) {
     });
 
     await appContext.saveChat();
-    await reloadCurrentChat();
-};
+
+    return reloadCurrentChat();
+}
+
 
 /**
- * Empties and fills the text block container.
+ * Updates the text blocks in the document with the provided data.
+ *
+ * @return {void}
  */
 function updateTextBlocks() {
     const container = document.getElementById('anlatan-nai-extras-textblocks');
@@ -333,22 +370,6 @@ const checkAdvancedFormatting = () => {
         element.textContent = '';
     }
 };
-
-/**
- * Populate extension settings
- */
-function loadSettings() {
-    extension_settings[extensionName] = extension_settings[extensionName] || {};
-
-    const extensionKeys = Object.keys(extension_settings[extensionName]);
-    const defaultKeys = Object.keys(defaultSettings);
-
-    for (const key of defaultKeys) {
-        if (!extensionKeys.includes(key)) {
-            extension_settings[extensionName][key] = defaultSettings[key];
-        }
-    }
-}
 
 function setupHelpers() {
 
@@ -540,8 +561,37 @@ function setupHelpers() {
     extensionsHandlebars.registerHelper('c', concatHelper);
 }
 
+/**
+ * Orders the input data to generate a combined prompt.
+ *
+ * @param {Object} data - The input data object.
+ * @param {boolean} data.isNai - Flag indicating if it is Nai or not.
+ * @param {Array<Object>} data.finalMesSend - Array of chat messages and prompts.
+ * @param {number} [data.pruneChatBy] - Number of chat messages to remove.
+ * @param {string} data.extensionSettings.storyString - Story string template.
+ * @param {string} data.extensionSettings.removeExampleChatSeparators - Flag indicating if example chat separators should be removed.
+ * @param {string} data.extensionSettings.removeLastMentionOfChar - Flag indicating if last mention of character should be removed.
+ * @param {Array<Object>} data.mesExmString - Array of example messages.
+ * @param {string} data.description - Description marker.
+ * @param {string} data.personality - Personality marker.
+ * @param {string} data.persona - Persona marker.
+ * @param {string} data.worldInfoBefore - World info before marker.
+ * @param {string} data.worldInfoAfter - World info after marker.
+ * @param {string} data.beforeScenarioAnchor - Scenario before marker.
+ * @param {string} data.afterScenarioAnchor - Scenario after marker.
+ * @param {string} data.scenario - Scenario marker.
+ * @param {string} data.naiPreamble - Nai preamble marker.
+ * @param {string} data.main - Main marker.
+ * @param {string} data.jailbreak - Jailbreak marker.
+ * @param {string} data.user - User marker.
+ * @param {string} data.char - Character marker.
+ * @param {string} data.generatedPromptCache - Generated prompt cache marker.
+ * @param {Array<Object>} data.extensionSettings.textBlocks - Array of text blocks.
+ * @param {string} data.extensionSettings.textBlocks.label - Label of the text block.
+ * @param {string} data.extensionSettings.textBlocks.content - Content of the text block.
+ */
 function orderInput(data) {
-    if (!isNai) return;
+    if (!isNai()) return;
 
     const storyStringTemplate = extensionsHandlebars.compile(`${extensionSettings.storyString} {{generatedPromptCache}}`, { noEscape: true });
     const chatData = structuredClone(data.finalMesSend);
@@ -593,18 +643,29 @@ function orderInput(data) {
     data.combinedPrompt = combinedPrompt;
 }
 
+/**
+ * Determines if the current mode is set to Story Mode.
+ *
+ * @returns {boolean} Returns true if the current mode is set to story mode, otherwise false.
+ */
 function storyMode() {
     return NaiMode.STORY === extensionSettings.mode;
 }
 
-function chatMode() {
-    return NaiMode.CHAT === extensionSettings.mode;
-}
-
+/**
+ * Determines if the current mode is set to Adventure Mode.
+ *
+ * @returns {boolean} Returns true if the current mode is set to adventure mode, otherwise false.
+ */
 function adventureMode() {
     return NaiMode.ADVENTURE === extensionSettings.mode;
 }
 
+/**
+ * Add ui elements required for text adventure mode.
+ *
+ * @return {void}
+ */
 function setupTextAdventure() {
 
     const naiPrefixSelect = document.getElementById('nai_prefix');
@@ -650,6 +711,13 @@ function setupTextAdventure() {
     });
 }
 
+/**
+ * Determines if a given character is the last character of a given string.
+ *
+ * @param {string} input - The input string.
+ * @param {string} character - The character to check.
+ * @return {boolean} - True if the given character is the last character of the input string; false otherwise.
+ */
 function isLastChar(input, character) {
     if (input.length === 0) {
         return false;
@@ -660,6 +728,12 @@ function isLastChar(input, character) {
     return character === lastChar;
 }
 
+/**
+ * Handles the event when the Nai mode changes.
+ *
+ * @param {Event} event - The event object.
+ * @returns {void}
+ */
 function onNaiModeChange(event) {
     if (!isNai) return;
 
@@ -669,6 +743,12 @@ function onNaiModeChange(event) {
     updateUi();
 }
 
+/**
+ * Initializes all required ui elements.
+ *
+ * @async
+ * @returns {void}
+ */
 async function init() {
     const container = document.getElementById('novel_api-settings');
     const naiExtrasHtml = await $.get(`${extensionFolderPath}/NaiExtrasSettings.html`);
@@ -732,3 +812,20 @@ let naiExtrasInitialized = false;
         }
     });
 })();
+
+
+/**
+ * Populate extension settings
+ */
+function loadSettings() {
+    extension_settings[extensionName] = extension_settings[extensionName] || {};
+
+    const extensionKeys = Object.keys(extension_settings[extensionName]);
+    const defaultKeys = Object.keys(defaultSettings);
+
+    for (const key of defaultKeys) {
+        if (!extensionKeys.includes(key)) {
+            extension_settings[extensionName][key] = defaultSettings[key];
+        }
+    }
+}
