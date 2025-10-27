@@ -1,3 +1,7 @@
+# This extension is now outdated.
+### Most of what this extension does can now be done via Advanced Formatting directly in SillyTavern. The formatting tips in this readme still apply to Clio and Kayra , but only in limited capacity for Erato.
+
+
 # Extra settings for NovelAI in SillyTavern
 
 NovelAI's Clio and Kayra models benefit from a context that is tailored to a specific story. With this extension, the composition of the context is placed in a location below the model parameters and allows for a more precise composition as well as binding a composition to a character.
